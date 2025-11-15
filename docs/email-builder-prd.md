@@ -350,7 +350,27 @@ Top-level styling system accessible via "Styles" button:
 
 ## Current Phase
 
-**Status**: Phase 1 - Foundation ✅ COMPLETE
+**Status**: Phase 2 - Slash Commands + Block Menu ✅ COMPLETE
+
+**What was built**:
+
+1. ✅ Installed `@tiptap/suggestion` and `@tiptap/core`
+2. ✅ Created `/lib/slash-command-extension.ts` - TipTap extension with suggestion system
+3. ✅ Created `/components/slash-command.tsx` - Notion-style inline popover menu
+4. ✅ Integrated slash commands into email editor with tippy.js positioning
+5. ✅ Added 4 block types: Paragraph, Heading 1, Heading 2, Heading 3
+6. ✅ Implemented keyboard navigation (ArrowUp, ArrowDown, Enter, Escape)
+7. ✅ Added icon-based visual menu with lucide-react icons
+8. ✅ Slash text replacement on block selection
+9. ✅ Search/filter functionality (e.g., `/hea` filters to headings)
+
+**Next Phase**: Phase 3 - Block Selection + Side Rail
+
+---
+
+## Previous Phases
+
+### Phase 1 - Foundation ✅ COMPLETE
 
 **What was built**:
 
@@ -360,8 +380,6 @@ Top-level styling system accessible via "Styles" button:
 4. ✅ Added localStorage persistence
 5. ✅ Styled to match Resend aesthetic (600px, centered)
 6. ✅ Added JSON output debug panel
-
-**Next Phase**: Phase 2 - Slash Commands + Block Menu
 
 ---
 
