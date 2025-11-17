@@ -41,11 +41,13 @@ User edits in TipTap
 ### Key Architectural Decisions
 
 1. **Data Model**: `EmailTemplate` wrapper around TipTap doc
+
    - `header`: from, replyTo, subject, preview
    - `globalStyles`: email-wide styling defaults
    - `content`: TipTap JSONContent (the actual document)
 
 2. **Block Strategy**: Extend StarterKit nodes, don't replace
+
    - Keep existing nodes: `paragraph`, `heading`, `bulletList`, `orderedList`, `blockquote`, `codeBlock`, `image`, `youtube`, `twitter`
    - Add email-specific nodes: `buttonBlock`, `dividerBlock`, `sectionBlock`, `socialLinksBlock`, `unsubscribeFooterBlock`, `htmlBlock`, `variableBlock`
    - All block nodes get:
@@ -53,16 +55,19 @@ User edits in TipTap
      - `attrs.styles` (structured style data for email export)
 
 3. **Styling Architecture**: Two-level system
+
    - **Global styles**: template-wide defaults (container, typography, links, buttons, etc.)
    - **Block-level styles**: instance-specific overrides (background, padding, borders, alignment, typography)
 
 4. **Block Manipulation**
+
    - Reuse `GlobalDragHandle` from novel for drag-to-reorder
    - Custom `BlockMeta/Selection` extension to track active block
    - Side rail UI (React) that positions based on block metadata
    - Attributes panel (Sheet) for block customization
 
 5. **Email Safety**
+
    - Transformer validates blocks and produces React Email components
    - Email-safe constraints enforced via schema and linting
    - Inline styles in output (no external CSS)
@@ -77,6 +82,7 @@ User edits in TipTap
 ## Email Block Taxonomy
 
 ### TEXT
+
 - Text (paragraph)
 - Heading 1
 - Heading 2
@@ -87,11 +93,13 @@ User edits in TipTap
 - Code Block
 
 ### MEDIA
+
 - Image
 - YouTube
 - X (Twitter)
 
 ### LAYOUT
+
 - Button
 - Divider
 - Section
@@ -99,6 +107,7 @@ User edits in TipTap
 - Unsubscribe Footer
 
 ### UTILITY
+
 - HTML
 - Variable
 
@@ -134,11 +143,13 @@ User edits in TipTap
 Block-specific customization options via right-side Sheet:
 
 **Appearance**
+
 - Background color
 - Border Radius
 - Border Width/Style/Color
 
 **Typography** (text blocks)
+
 - Text color
 - Font size
 - Font weight
@@ -146,6 +157,7 @@ Block-specific customization options via right-side Sheet:
 - Text decoration
 
 **Layout**
+
 - Padding (all sides)
 - Alignment (left/center/right)
 
@@ -154,39 +166,47 @@ Block-specific customization options via right-side Sheet:
 Template-wide styling system accessible via "Styles" button in top bar:
 
 **Body/Container**
+
 - Container width (default 600px)
 - Alignment
 - Padding
 
 **Typography**
+
 - Base font family
 - Base font size
 - Base line height
 
 **Link**
+
 - Default color
 - Default decoration
 
 **Image**
+
 - Default border radius
 
 **Button**
+
 - Default background color
 - Default text color
 - Default border radius
 - Default padding
 
 **Code Block**
+
 - Background color
 - Border radius
 - Padding
 
 **Inline Code**
+
 - Background color
 - Text color
 - Border radius
 
 **Global CSS** (advanced)
+
 - Custom CSS injection for edge cases
 
 ### Image Upload
@@ -210,6 +230,7 @@ Template-wide styling system accessible via "Styles" button in top bar:
 ### Bubble Menu (Text Selection)
 
 Reuses novel's bubble menu with email-appropriate controls:
+
 - Node selector (Text, H1, H2, H3, Lists, Quote, Code)
 - Bold, Italic, Underline, Strike, Code
 - Link insertion/editing
@@ -231,11 +252,10 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Wrap the existing novel editor into an explicit `EmailTemplate` model with full JSON visibility
 
-**Duration**: ~1-2 days
-
 **Deliverables**:
 
 1. Define `EmailTemplate` TypeScript interface:
+
    ```ts
    interface EmailTemplate {
      id: string;
@@ -254,6 +274,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 2. Create `GlobalStyles` interface with sensible defaults:
+
    ```ts
    interface GlobalStyles {
      container: {
@@ -275,12 +296,14 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Create `EmailTemplateEditor` component:
+
    - Wraps the existing `TailwindAdvancedEditor`
    - Manages `EmailTemplate` state
    - Updates `template.content` when editor changes
    - Persists entire template to localStorage
 
 4. Enhanced JSON debug panel:
+
    - Show full `EmailTemplate` JSON (not just TipTap content)
    - Collapsible sections for header, globalStyles, content
    - Copy-to-clipboard button
@@ -291,6 +314,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Defaults populated from template
 
 **Success Criteria**:
+
 - Can type, edit, paste markdown content in editor
 - All edits update `EmailTemplate.content` in JSON
 - Header and globalStyles appear in JSON with defaults
@@ -298,6 +322,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Existing novel features work: drag, bubble menu, slash menu, markdown paste
 
 **Files to Create/Modify**:
+
 - `/types/email-template.ts` – Type definitions
 - `/lib/email-template-defaults.ts` – Default template
 - `/components/email-template-editor.tsx` – Main wrapper component
@@ -310,16 +335,16 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Make the `/` command menu match email block taxonomy and organize blocks semantically
 
-**Duration**: ~1-2 days
-
 **Deliverables**:
 
 1. Replace slash command items with email-focused list:
+
    - Group by category: TEXT, MEDIA, LAYOUT, UTILITY
    - Map to existing nodes where possible
    - Create placeholder entries for not-yet-implemented blocks
 
 2. Update `/components/slash-command.tsx`:
+
    ```ts
    const emailBlocks = [
      // TEXT category
@@ -331,19 +356,19 @@ Reuses novel's bubble menu with email-appropriate controls:
      { category: "TEXT", title: "Numbered List", ... },
      { category: "TEXT", title: "Quote", ... },
      { category: "TEXT", title: "Code Block", ... },
-     
+
      // MEDIA category
      { category: "MEDIA", title: "Image", ... },
      { category: "MEDIA", title: "YouTube", ... },
      { category: "MEDIA", title: "X (Twitter)", ... },
-     
+
      // LAYOUT category (placeholders for now)
      { category: "LAYOUT", title: "Button", ... },
      { category: "LAYOUT", title: "Divider", ... },
      { category: "LAYOUT", title: "Section", ... },
      { category: "LAYOUT", title: "Social Links", ... },
      { category: "LAYOUT", title: "Unsubscribe Footer", ... },
-     
+
      // UTILITY category (placeholders)
      { category: "UTILITY", title: "HTML", ... },
      { category: "UTILITY", title: "Variable", ... },
@@ -351,11 +376,13 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Implement placeholder blocks for LAYOUT/UTILITY:
+
    - Simple paragraph with special class/data attribute
    - Or minimal custom nodes with just `content` and `category` attrs
    - Render with distinct styling to show they're placeholders
 
 4. Update visual design of slash menu:
+
    - Category headers
    - Email-appropriate icons
    - Descriptions matching email use cases
@@ -363,6 +390,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 5. Sync bubble menu `NodeSelector` with email blocks
 
 **Success Criteria**:
+
 - Typing `/` shows email-categorized block menu
 - All TEXT blocks insert and work correctly
 - All MEDIA blocks insert and work correctly
@@ -371,6 +399,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Bubble menu NodeSelector matches slash menu
 
 **Files to Create/Modify**:
+
 - `/components/email-slash-command.tsx` – Email-specific slash menu
 - `/lib/email-blocks.ts` – Block definitions and commands
 - Update `/components/email-template-editor.tsx` to use new slash command
@@ -382,27 +411,27 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Give each block a stable identity and implement block selection/tracking infrastructure
 
-**Duration**: ~2-3 days
-
 **Deliverables**:
 
 1. Add UniqueID to all block nodes:
+
    - Install/configure TipTap's UniqueID extension, or
    - Create custom `BlockID` extension
    - Add `id` attribute to all block-level node schemas
 
 2. Create `BlockMetaExtension`:
+
    ```ts
    // /lib/extensions/block-meta.ts
    const BlockMeta = Extension.create({
-     name: 'blockMeta',
-     
+     name: "blockMeta",
+
      addStorage() {
        return {
          activeBlock: null, // { id, type, pos, domRect }
        };
      },
-     
+
      addProseMirrorPlugins() {
        return [
          new Plugin({
@@ -427,22 +456,24 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Implement block position/rect calculation:
+
    - Use `view.domAtPos()` and `view.nodeDOM()` to get DOM elements
    - Calculate bounding rects for positioning UI
    - Store in plugin state and expose via storage API
 
 4. Add React context/hook for block metadata:
+
    ```ts
    // /hooks/use-active-block.ts
    const useActiveBlock = () => {
      const { editor } = useEditor();
      const [activeBlock, setActiveBlock] = useState(null);
-     
+
      useEffect(() => {
        // Subscribe to block metadata updates
        // Update React state when active block changes
      }, [editor]);
-     
+
      return activeBlock;
    };
    ```
@@ -453,6 +484,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Clear visual indicator without disrupting editing
 
 **Success Criteria**:
+
 - Every block node in JSON has a unique, stable `id`
 - IDs persist across edits and page reloads
 - Can log active block metadata in dev console
@@ -460,6 +492,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - No performance degradation from tracking
 
 **Files to Create**:
+
 - `/lib/extensions/block-id.ts` – Block ID extension
 - `/lib/extensions/block-meta.ts` – Block selection/tracking
 - `/hooks/use-active-block.ts` – React hook for active block
@@ -471,31 +504,31 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Add Resend-style hover rail with drag handle and attributes button
 
-**Duration**: ~2-3 days
-
 **Deliverables**:
 
 1. Verify and style GlobalDragHandle:
+
    - Confirm `GlobalDragHandle` extension is active
    - Adjust `.drag-handle` CSS for email editor aesthetic
    - Ensure drag behavior works with email blocks
 
 2. Create `BlockSideRail` component:
+
    ```tsx
    // /components/block-side-rail.tsx
    const BlockSideRail = () => {
      const activeBlock = useActiveBlock();
      const [showAttributes, setShowAttributes] = useState(false);
-     
+
      if (!activeBlock) return null;
-     
+
      const { domRect } = activeBlock;
-     
+
      return (
        <div
          className="block-side-rail"
          style={{
-           position: 'absolute',
+           position: "absolute",
            left: domRect.left - 40, // Position to left of block
            top: domRect.top,
            // ... positioning logic
@@ -505,7 +538,7 @@ Reuses novel's bubble menu with email-appropriate controls:
          <button className="drag-handle-button">
            <GripVertical size={16} />
          </button>
-         
+
          {/* Attributes button */}
          <button
            className="attributes-button"
@@ -519,17 +552,20 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Position side rail dynamically:
+
    - Subscribe to active block metadata
    - Calculate rail position based on block's DOM rect
    - Handle scroll events to keep rail aligned
    - Hide when no active block
 
 4. Integrate with drag behavior:
+
    - Wire drag handle button to trigger ProseMirror drag
    - Or rely on GlobalDragHandle if it already covers the block
    - Ensure smooth drag experience
 
 5. Stub attributes panel:
+
    - Create basic Sheet component
    - Opens when attributes button clicked
    - Shows active block type and ID for now
@@ -541,6 +577,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Visual feedback for drag start
 
 **Success Criteria**:
+
 - Side rail appears when hovering over any block
 - Rail positioned correctly to the left of the block
 - Rail follows block on scroll
@@ -550,6 +587,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Smooth, non-janky UX
 
 **Files to Create**:
+
 - `/components/block-side-rail.tsx` – Side rail component
 - `/components/attributes-panel.tsx` – Stub panel
 - Update `/components/email-template-editor.tsx` to render rail
@@ -561,11 +599,10 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Implement real attributes panel for text blocks with appearance and typography controls
 
-**Duration**: ~3-4 days
-
 **Deliverables**:
 
 1. Define block styles schema:
+
    ```ts
    // /types/block-styles.ts
    interface BlockStyles {
@@ -575,14 +612,14 @@ Reuses novel's bubble menu with email-appropriate controls:
      borderWidth?: number;
      borderStyle?: "solid" | "dashed" | "dotted" | "none";
      borderColor?: string;
-     
+
      // Typography (text blocks)
      textColor?: string;
      fontSize?: number;
      fontWeight?: 400 | 500 | 600 | 700;
      lineHeight?: number;
      textDecoration?: "none" | "underline" | "line-through";
-     
+
      // Layout
      padding?: {
        top: number;
@@ -595,6 +632,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 2. Extend text block nodes with styles attr:
+
    ```ts
    // Extend paragraph, heading schemas
    Paragraph.extend({
@@ -604,9 +642,10 @@ Reuses novel's bubble menu with email-appropriate controls:
          id: { default: null },
          styles: {
            default: {},
-           parseHTML: element => JSON.parse(element.getAttribute('data-styles') || '{}'),
-           renderHTML: attributes => ({
-             'data-styles': JSON.stringify(attributes.styles || {}),
+           parseHTML: (element) =>
+             JSON.parse(element.getAttribute("data-styles") || "{}"),
+           renderHTML: (attributes) => ({
+             "data-styles": JSON.stringify(attributes.styles || {}),
            }),
          },
        };
@@ -615,6 +654,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Build AttributesPanel UI:
+
    - Use shadcn Sheet for right-side panel
    - Sections: Appearance, Typography, Layout
    - Form controls:
@@ -625,26 +665,28 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Real-time updates as user changes values
 
 4. Connect panel to editor:
+
    ```tsx
    const AttributesPanel = ({ blockId, blockType, onClose }) => {
      const { editor } = useEditor();
      const [styles, setStyles] = useState<BlockStyles>({});
-     
+
      // Load current block styles
      useEffect(() => {
        const node = findNodeById(editor, blockId);
        setStyles(node?.attrs.styles || {});
      }, [blockId]);
-     
+
      // Update block on change
      const updateStyle = (key: string, value: any) => {
-       editor.chain()
+       editor
+         .chain()
          .updateAttributes(blockType, {
-           styles: { ...styles, [key]: value }
+           styles: { ...styles, [key]: value },
          })
          .run();
      };
-     
+
      return (
        <Sheet open={!!blockId} onOpenChange={onClose}>
          {/* Form controls */}
@@ -654,6 +696,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 5. Apply styles in editor view:
+
    - Map `attrs.styles` to inline styles in `renderHTML`
    - Use `HTMLAttributes` or custom NodeView
    - Ensure WYSIWYG: what you style is what you see
@@ -664,6 +707,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Survives save/load
 
 **Success Criteria**:
+
 - Clicking attributes button opens panel for selected block
 - Panel shows current block styles
 - Changing any style (background, padding, font size, etc.) updates block in real-time
@@ -673,6 +717,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - No bugs with multiple rapid style changes
 
 **Files to Create/Modify**:
+
 - `/types/block-styles.ts` – Styles type definitions
 - `/lib/extensions/email-paragraph.ts` – Extended paragraph node
 - `/lib/extensions/email-heading.ts` – Extended heading node
@@ -688,37 +733,37 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Add global email styling controls and editable template header fields
 
-**Duration**: ~3-4 days
-
 **Deliverables**:
 
 1. Implement GlobalStyles in EmailTemplate:
+
    - Already defined in Phase 1 type
    - Create defaults with sensible values
    - Wire to template state
 
 2. Build GlobalStylesPanel:
+
    ```tsx
    // /components/global-styles-panel.tsx
    const GlobalStylesPanel = ({ open, onClose }) => {
      const [template, setTemplate] = useEmailTemplate();
      const { globalStyles } = template;
-     
+
      const updateGlobalStyle = (path: string, value: any) => {
        // Deep update globalStyles
        setTemplate({
          ...template,
-         globalStyles: deepSet(globalStyles, path, value)
+         globalStyles: deepSet(globalStyles, path, value),
        });
      };
-     
+
      return (
        <Sheet open={open} onOpenChange={onClose}>
          <SheetContent side="right" className="w-[400px]">
            <SheetHeader>
              <SheetTitle>Global Styles</SheetTitle>
            </SheetHeader>
-           
+
            {/* Container section */}
            <Accordion type="single" collapsible>
              <AccordionItem value="container">
@@ -727,7 +772,7 @@ Reuses novel's bubble menu with email-appropriate controls:
                  {/* Width, alignment, padding inputs */}
                </AccordionContent>
              </AccordionItem>
-             
+
              {/* Typography section */}
              <AccordionItem value="typography">
                <AccordionTrigger>Typography</AccordionTrigger>
@@ -735,7 +780,7 @@ Reuses novel's bubble menu with email-appropriate controls:
                  {/* Font family, size, line height */}
                </AccordionContent>
              </AccordionItem>
-             
+
              {/* Link, Image, Button, Code sections... */}
            </Accordion>
          </SheetContent>
@@ -745,11 +790,13 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Add "Styles" button to top bar:
+
    - Next to existing buttons (Publish, etc.)
    - Opens GlobalStylesPanel
    - Icon: Palette or Sliders
 
 4. Apply global styles to editor:
+
    - Inject CSS variables or inline styles based on globalStyles
    - Update editor wrapper with container width, padding
    - Apply base typography to `.ProseMirror`
@@ -757,19 +804,20 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Update when globalStyles change
 
 5. Build TemplateHeader component:
+
    ```tsx
    // /components/template-header.tsx
    const TemplateHeader = () => {
      const [template, setTemplate] = useEmailTemplate();
      const { header } = template;
-     
+
      const updateHeader = (field: string, value: string) => {
        setTemplate({
          ...template,
-         header: { ...header, [field]: value }
+         header: { ...header, [field]: value },
        });
      };
-     
+
      return (
        <div className="template-header">
          <div className="grid grid-cols-2 gap-4">
@@ -777,7 +825,7 @@ Reuses novel's bubble menu with email-appropriate controls:
              <Label>From</Label>
              <Input
                value={header.from}
-               onChange={(e) => updateHeader('from', e.target.value)}
+               onChange={(e) => updateHeader("from", e.target.value)}
                placeholder="sender@example.com"
              />
            </div>
@@ -785,7 +833,7 @@ Reuses novel's bubble menu with email-appropriate controls:
              <Label>Reply-To</Label>
              <Input
                value={header.replyTo}
-               onChange={(e) => updateHeader('replyTo', e.target.value)}
+               onChange={(e) => updateHeader("replyTo", e.target.value)}
                placeholder="reply@example.com"
              />
            </div>
@@ -794,7 +842,7 @@ Reuses novel's bubble menu with email-appropriate controls:
            <Label>Subject</Label>
            <Input
              value={header.subject}
-             onChange={(e) => updateHeader('subject', e.target.value)}
+             onChange={(e) => updateHeader("subject", e.target.value)}
              placeholder="Your email subject"
            />
          </div>
@@ -802,7 +850,7 @@ Reuses novel's bubble menu with email-appropriate controls:
            <Label>Preview Text</Label>
            <Input
              value={header.preview}
-             onChange={(e) => updateHeader('preview', e.target.value)}
+             onChange={(e) => updateHeader("preview", e.target.value)}
              placeholder="Preview text shown in inbox"
            />
          </div>
@@ -812,15 +860,17 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 6. Integrate header into editor layout:
+
    - Position above editor canvas
    - Collapsible or always visible
    - Clean, minimal design
 
 7. Context/hook for template state:
+
    ```ts
    // /hooks/use-email-template.ts
    const EmailTemplateContext = createContext(null);
-   
+
    export const useEmailTemplate = () => {
      const context = useContext(EmailTemplateContext);
      return [context.template, context.setTemplate];
@@ -828,6 +878,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 **Success Criteria**:
+
 - "Styles" button in top bar opens global styles panel
 - Changing global font size updates all text in editor
 - Changing container width visually resizes editor canvas
@@ -837,6 +888,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Changes survive page reload
 
 **Files to Create/Modify**:
+
 - `/components/global-styles-panel.tsx` – Global styles UI
 - `/components/template-header.tsx` – Header fields UI
 - `/hooks/use-email-template.ts` – Template state management
@@ -850,28 +902,28 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Convert EmailTemplate to React Email components and enable preview/export
 
-**Duration**: ~4-5 days
-
 **Deliverables**:
 
 1. Install React Email:
+
    ```bash
    pnpm add @react-email/components
    ```
 
 2. Create transformer module:
+
    ```ts
    // /lib/email-transform/index.ts
-   import { JSONContent } from '@tiptap/react';
-   import { EmailTemplate } from '@/types/email-template';
-   import * as ReactEmail from '@react-email/components';
-   
+   import { JSONContent } from "@tiptap/react";
+   import { EmailTemplate } from "@/types/email-template";
+   import * as ReactEmail from "@react-email/components";
+
    export const transformToReactEmail = (template: EmailTemplate) => {
      const { header, globalStyles, content } = template;
-     
+
      // Map TipTap JSON to React Email JSX
      const body = transformContent(content, globalStyles);
-     
+
      return (
        <ReactEmail.Html>
          <ReactEmail.Head>
@@ -886,34 +938,46 @@ Reuses novel's bubble menu with email-appropriate controls:
        </ReactEmail.Html>
      );
    };
-   
-   const transformContent = (content: JSONContent, globalStyles: GlobalStyles) => {
+
+   const transformContent = (
+     content: JSONContent,
+     globalStyles: GlobalStyles
+   ) => {
      return content.content?.map((node, idx) => {
        switch (node.type) {
-         case 'paragraph':
-           return <ReactEmail.Text key={idx} style={getNodeStyles(node, globalStyles)}>
-             {transformInlineContent(node.content)}
-           </ReactEmail.Text>;
-           
-         case 'heading':
-           return <ReactEmail.Heading
-             key={idx}
-             as={`h${node.attrs.level}`}
-             style={getNodeStyles(node, globalStyles)}
-           >
-             {transformInlineContent(node.content)}
-           </ReactEmail.Heading>;
-           
-         case 'image':
-           return <ReactEmail.Img
-             key={idx}
-             src={node.attrs.src}
-             alt={node.attrs.alt}
-             style={getNodeStyles(node, globalStyles)}
-           />;
-           
+         case "paragraph":
+           return (
+             <ReactEmail.Text
+               key={idx}
+               style={getNodeStyles(node, globalStyles)}
+             >
+               {transformInlineContent(node.content)}
+             </ReactEmail.Text>
+           );
+
+         case "heading":
+           return (
+             <ReactEmail.Heading
+               key={idx}
+               as={`h${node.attrs.level}`}
+               style={getNodeStyles(node, globalStyles)}
+             >
+               {transformInlineContent(node.content)}
+             </ReactEmail.Heading>
+           );
+
+         case "image":
+           return (
+             <ReactEmail.Img
+               key={idx}
+               src={node.attrs.src}
+               alt={node.attrs.alt}
+               style={getNodeStyles(node, globalStyles)}
+             />
+           );
+
          // ... more node types
-         
+
          default:
            return null;
        }
@@ -922,16 +986,17 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Implement style transformation:
+
    ```ts
    // /lib/email-transform/styles.ts
    const getNodeStyles = (node: JSONContent, globalStyles: GlobalStyles) => {
      const blockStyles = node.attrs?.styles || {};
-     
+
      return {
        // Merge global defaults with block-specific overrides
-       backgroundColor: blockStyles.background || 'transparent',
+       backgroundColor: blockStyles.background || "transparent",
        borderRadius: blockStyles.borderRadius || globalStyles.borderRadius,
-       padding: blockStyles.padding 
+       padding: blockStyles.padding
          ? `${blockStyles.padding.top}px ${blockStyles.padding.right}px ${blockStyles.padding.bottom}px ${blockStyles.padding.left}px`
          : undefined,
        color: blockStyles.textColor || globalStyles.typography.color,
@@ -942,21 +1007,22 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 4. Build Preview component:
+
    ```tsx
    // /components/email-preview.tsx
    const EmailPreview = ({ template }: { template: EmailTemplate }) => {
      const reactEmailJSX = transformToReactEmail(template);
      const html = render(reactEmailJSX); // Use React Email's render
-     
+
      return (
        <div className="email-preview">
          <iframe
            srcDoc={html}
            style={{
-             width: '100%',
-             minHeight: '600px',
-             border: '1px solid #e5e7eb',
-             borderRadius: '8px',
+             width: "100%",
+             minHeight: "600px",
+             border: "1px solid #e5e7eb",
+             borderRadius: "8px",
            }}
          />
        </div>
@@ -965,44 +1031,44 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 5. Add Preview tab to editor:
+
    - Tabs component: "Edit" | "Preview"
    - Edit shows normal editor
    - Preview shows rendered email in iframe
    - Toggle between views
 
 6. Build Export functionality:
+
    ```tsx
    // /components/export-menu.tsx
    const ExportMenu = ({ template }: { template: EmailTemplate }) => {
      const exportHTML = async () => {
        const jsx = transformToReactEmail(template);
        const html = await render(jsx);
-       
+
        // Download as file
-       const blob = new Blob([html], { type: 'text/html' });
+       const blob = new Blob([html], { type: "text/html" });
        const url = URL.createObjectURL(blob);
-       const a = document.createElement('a');
+       const a = document.createElement("a");
        a.href = url;
-       a.download = `${template.header.subject || 'email'}.html`;
+       a.download = `${template.header.subject || "email"}.html`;
        a.click();
      };
-     
+
      const copyHTML = async () => {
        const jsx = transformToReactEmail(template);
        const html = await render(jsx);
        await navigator.clipboard.writeText(html);
-       toast.success('HTML copied to clipboard');
+       toast.success("HTML copied to clipboard");
      };
-     
+
      return (
        <DropdownMenu>
          <DropdownMenuTrigger asChild>
            <Button variant="outline">Export</Button>
          </DropdownMenuTrigger>
          <DropdownMenuContent>
-           <DropdownMenuItem onClick={copyHTML}>
-             Copy HTML
-           </DropdownMenuItem>
+           <DropdownMenuItem onClick={copyHTML}>Copy HTML</DropdownMenuItem>
            <DropdownMenuItem onClick={exportHTML}>
              Download HTML
            </DropdownMenuItem>
@@ -1013,33 +1079,36 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 7. Handle inline content (bold, italic, links):
+
    ```ts
    const transformInlineContent = (content?: JSONContent[]) => {
      return content?.map((node, idx) => {
-       if (node.type === 'text') {
+       if (node.type === "text") {
          let text: React.ReactNode = node.text;
-         
-         node.marks?.forEach(mark => {
+
+         node.marks?.forEach((mark) => {
            switch (mark.type) {
-             case 'bold':
+             case "bold":
                text = <strong key={idx}>{text}</strong>;
                break;
-             case 'italic':
+             case "italic":
                text = <em key={idx}>{text}</em>;
                break;
-             case 'link':
-               text = <ReactEmail.Link
-                 key={idx}
-                 href={mark.attrs.href}
-                 style={getLinkStyles(globalStyles)}
-               >
-                 {text}
-               </ReactEmail.Link>;
+             case "link":
+               text = (
+                 <ReactEmail.Link
+                   key={idx}
+                   href={mark.attrs.href}
+                   style={getLinkStyles(globalStyles)}
+                 >
+                   {text}
+                 </ReactEmail.Link>
+               );
                break;
              // ... more marks
            }
          });
-         
+
          return text;
        }
        return null;
@@ -1048,6 +1117,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 **Success Criteria**:
+
 - Clicking "Preview" tab shows email rendered via React Email
 - Preview visually matches editor (WYSIWYG validated)
 - Export > Copy HTML produces valid email HTML string
@@ -1058,6 +1128,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Inline formatting (bold, italic, links) preserved
 
 **Files to Create**:
+
 - `/lib/email-transform/index.ts` – Main transformer
 - `/lib/email-transform/styles.ts` – Style mapping utilities
 - `/lib/email-transform/nodes.ts` – Node type transformers
@@ -1071,42 +1142,41 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Implement custom nodes for email-specific blocks (Button, Divider, Section, etc.)
 
-**Duration**: ~5-6 days
-
 **Deliverables**:
 
 1. **Button Block**:
+
    ```ts
    // /lib/extensions/button-block.ts
    const ButtonBlock = Node.create({
-     name: 'buttonBlock',
-     group: 'block',
+     name: "buttonBlock",
+     group: "block",
      atom: true,
-     
+
      addAttributes() {
        return {
          id: { default: null },
-         text: { default: 'Click me' },
-         href: { default: '#' },
+         text: { default: "Click me" },
+         href: { default: "#" },
          styles: { default: {} },
        };
      },
-     
+
      parseHTML() {
        return [{ tag: 'div[data-type="button-block"]' }];
      },
-     
+
      renderHTML({ node, HTMLAttributes }) {
        return [
-         'div',
+         "div",
          mergeAttributes(HTMLAttributes, {
-           'data-type': 'button-block',
+           "data-type": "button-block",
            style: getButtonStyles(node.attrs.styles),
          }),
-         ['a', { href: node.attrs.href }, node.attrs.text],
+         ["a", { href: node.attrs.href }, node.attrs.text],
        ];
      },
-     
+
      addNodeView() {
        return ReactNodeViewRenderer(ButtonBlockView);
      },
@@ -1114,10 +1184,11 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
    Button NodeView (for editing):
+
    ```tsx
    const ButtonBlockView = ({ node, updateAttributes }: NodeViewProps) => {
      const [editing, setEditing] = useState(false);
-     
+
      return (
        <NodeViewWrapper>
          {editing ? (
@@ -1149,6 +1220,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
    React Email transformation:
+
    ```tsx
    case 'buttonBlock':
      return (
@@ -1163,23 +1235,24 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 2. **Divider Block**:
+
    ```ts
    // /lib/extensions/divider-block.ts
    const DividerBlock = Node.create({
-     name: 'dividerBlock',
-     group: 'block',
+     name: "dividerBlock",
+     group: "block",
      atom: true,
-     
+
      addAttributes() {
        return {
          id: { default: null },
          styles: { default: {} },
        };
      },
-     
+
      renderHTML({ node, HTMLAttributes }) {
        return [
-         'hr',
+         "hr",
          mergeAttributes(HTMLAttributes, {
            style: getDividerStyles(node.attrs.styles),
          }),
@@ -1189,6 +1262,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
    React Email transformation:
+
    ```tsx
    case 'dividerBlock':
      return (
@@ -1200,13 +1274,14 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. **Section Block** (supports columns):
+
    ```ts
    // /lib/extensions/section-block.ts
    const SectionBlock = Node.create({
-     name: 'sectionBlock',
-     group: 'block',
-     content: 'block+',
-     
+     name: "sectionBlock",
+     group: "block",
+     content: "block+",
+
      addAttributes() {
        return {
          id: { default: null },
@@ -1214,13 +1289,13 @@ Reuses novel's bubble menu with email-appropriate controls:
          styles: { default: {} },
        };
      },
-     
+
      renderHTML({ node, HTMLAttributes }) {
        return [
-         'div',
+         "div",
          mergeAttributes(HTMLAttributes, {
-           'data-type': 'section-block',
-           'data-columns': node.attrs.columns,
+           "data-type": "section-block",
+           "data-columns": node.attrs.columns,
            style: getSectionStyles(node.attrs.styles),
          }),
          0, // content hole
@@ -1230,6 +1305,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
    React Email transformation (using table-based layout):
+
    ```tsx
    case 'sectionBlock':
      const columns = node.attrs.columns || 1;
@@ -1244,20 +1320,21 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 4. **Social Links Block**:
+
    ```ts
    const SocialLinksBlock = Node.create({
-     name: 'socialLinksBlock',
-     group: 'block',
+     name: "socialLinksBlock",
+     group: "block",
      atom: true,
-     
+
      addAttributes() {
        return {
          id: { default: null },
          links: {
            default: [
-             { platform: 'twitter', url: '' },
-             { platform: 'facebook', url: '' },
-             { platform: 'linkedin', url: '' },
+             { platform: "twitter", url: "" },
+             { platform: "facebook", url: "" },
+             { platform: "linkedin", url: "" },
            ],
          },
          styles: { default: {} },
@@ -1267,16 +1344,17 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 5. **Unsubscribe Footer Block**:
+
    ```ts
    const UnsubscribeFooterBlock = Node.create({
-     name: 'unsubscribeFooterBlock',
-     group: 'block',
-     content: 'inline*',
-     
+     name: "unsubscribeFooterBlock",
+     group: "block",
+     content: "inline*",
+
      addAttributes() {
        return {
          id: { default: null },
-         unsubscribeUrl: { default: '{{unsubscribe_url}}' },
+         unsubscribeUrl: { default: "{{unsubscribe_url}}" },
          styles: { default: {} },
        };
      },
@@ -1284,24 +1362,25 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 6. **HTML Block**:
+
    ```ts
    const HTMLBlock = Node.create({
-     name: 'htmlBlock',
-     group: 'block',
+     name: "htmlBlock",
+     group: "block",
      atom: true,
-     
+
      addAttributes() {
        return {
          id: { default: null },
-         html: { default: '' },
+         html: { default: "" },
        };
      },
-     
+
      addNodeView() {
        return ReactNodeViewRenderer(HTMLBlockView);
      },
    });
-   
+
    // View with code editor (monaco/codemirror)
    const HTMLBlockView = ({ node, updateAttributes }: NodeViewProps) => {
      return (
@@ -1317,6 +1396,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 7. Update slash command with real nodes:
+
    - Wire LAYOUT category items to new nodes
    - Remove placeholder implementations
 
@@ -1328,6 +1408,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - HTMLBlock: raw HTML editor with syntax highlighting
 
 **Success Criteria**:
+
 - Can insert Button block, edit text & URL, style it
 - Button exports correctly to React Email `<Button>`
 - Divider block renders as HR and exports correctly
@@ -1339,6 +1420,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - All blocks export correctly to React Email
 
 **Files to Create**:
+
 - `/lib/extensions/button-block.ts` + NodeView
 - `/lib/extensions/divider-block.ts`
 - `/lib/extensions/section-block.ts` + NodeView
@@ -1357,11 +1439,10 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Implement template variables for personalization
 
-**Duration**: ~3-4 days
-
 **Deliverables**:
 
 1. Define Variable type:
+
    ```ts
    // /types/email-template.ts
    interface Variable {
@@ -1374,6 +1455,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 2. Add variables array to EmailTemplate:
+
    ```ts
    interface EmailTemplate {
      // ... existing fields
@@ -1382,32 +1464,33 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Create Variable node (inline):
+
    ```ts
    // /lib/extensions/variable-node.ts
    const VariableNode = Node.create({
-     name: 'variable',
-     group: 'inline',
+     name: "variable",
+     group: "inline",
      inline: true,
      atom: true,
-     
+
      addAttributes() {
        return {
-         name: { default: '' },
-         fallback: { default: '' },
+         name: { default: "" },
+         fallback: { default: "" },
        };
      },
-     
+
      parseHTML() {
        return [{ tag: 'span[data-type="variable"]' }];
      },
-     
+
      renderHTML({ node }) {
        return [
-         'span',
+         "span",
          {
-           'data-type': 'variable',
-           class: 'variable-node',
-           contenteditable: 'false',
+           "data-type": "variable",
+           class: "variable-node",
+           contenteditable: "false",
          },
          `{{${node.attrs.name}}}`,
        ];
@@ -1416,12 +1499,13 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 4. Build Variables manager UI:
+
    ```tsx
    // /components/variables-panel.tsx
    const VariablesPanel = ({ open, onClose }) => {
      const [template, setTemplate] = useEmailTemplate();
      const { variables } = template;
-     
+
      const addVariable = () => {
        setTemplate({
          ...template,
@@ -1429,44 +1513,46 @@ Reuses novel's bubble menu with email-appropriate controls:
            ...variables,
            {
              id: generateId(),
-             name: 'newVariable',
-             type: 'string',
-             defaultValue: '',
+             name: "newVariable",
+             type: "string",
+             defaultValue: "",
            },
          ],
        });
      };
-     
+
      const updateVariable = (id: string, updates: Partial<Variable>) => {
        setTemplate({
          ...template,
-         variables: variables.map(v => 
+         variables: variables.map((v) =>
            v.id === id ? { ...v, ...updates } : v
          ),
        });
      };
-     
+
      const deleteVariable = (id: string) => {
        setTemplate({
          ...template,
-         variables: variables.filter(v => v.id !== id),
+         variables: variables.filter((v) => v.id !== id),
        });
      };
-     
+
      return (
        <Sheet open={open} onOpenChange={onClose}>
          <SheetContent>
            <SheetHeader>
              <SheetTitle>Template Variables</SheetTitle>
            </SheetHeader>
-           
+
            <div className="space-y-4">
-             {variables.map(variable => (
+             {variables.map((variable) => (
                <div key={variable.id} className="border rounded p-4">
                  <Input
                    label="Name"
                    value={variable.name}
-                   onChange={(e) => updateVariable(variable.id, { name: e.target.value })}
+                   onChange={(e) =>
+                     updateVariable(variable.id, { name: e.target.value })
+                   }
                  />
                  <Select
                    label="Type"
@@ -1479,7 +1565,11 @@ Reuses novel's bubble menu with email-appropriate controls:
                  <Input
                    label="Default Value"
                    value={variable.defaultValue}
-                   onChange={(e) => updateVariable(variable.id, { defaultValue: e.target.value })}
+                   onChange={(e) =>
+                     updateVariable(variable.id, {
+                       defaultValue: e.target.value,
+                     })
+                   }
                  />
                  <Button
                    variant="destructive"
@@ -1489,7 +1579,7 @@ Reuses novel's bubble menu with email-appropriate controls:
                  </Button>
                </div>
              ))}
-             
+
              <Button onClick={addVariable}>Add Variable</Button>
            </div>
          </SheetContent>
@@ -1499,14 +1589,17 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 5. Add "Insert Variable" to slash menu:
+
    - Shows list of defined variables
    - Inserts `variable` node with selected name
 
 6. Support variables in header fields:
+
    - Subject and preview can contain `{{variableName}}` syntax
    - Parse and render in preview/export
 
 7. Variable preview mode:
+
    - Toggle in UI to show variables with sample data
    - "Preview with data" feature
 
@@ -1519,6 +1612,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 **Success Criteria**:
+
 - Can define variables in Variables panel
 - Can insert variables into content via slash menu
 - Variables render as `{{name}}` pills in editor
@@ -1528,6 +1622,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Variable fallbacks work when data missing
 
 **Files to Create**:
+
 - `/lib/extensions/variable-node.ts` – Variable inline node
 - `/components/variables-panel.tsx` – Variable manager UI
 - `/lib/email-transform/variables.ts` – Variable rendering utilities
@@ -1540,23 +1635,22 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Final polish, comprehensive testing, email client compatibility validation
 
-**Duration**: ~5-7 days
-
 **Deliverables**:
 
 1. **Email safety linting**:
+
    ```ts
    // /lib/email-linting.ts
    interface LintIssue {
-     severity: 'error' | 'warning' | 'info';
+     severity: "error" | "warning" | "info";
      message: string;
      blockId?: string;
      fix?: () => void;
    }
-   
+
    const lintEmailTemplate = (template: EmailTemplate): LintIssue[] => {
      const issues: LintIssue[] = [];
-     
+
      // Check all images have alt text
      // Check all links have href
      // Warn on very large images
@@ -1565,17 +1659,19 @@ Reuses novel's bubble menu with email-appropriate controls:
      // Check subject line length (< 60 chars recommended)
      // Check preview text length
      // Ensure unsubscribe link present
-     
+
      return issues;
    };
    ```
 
 2. **Linting panel**:
+
    - Show issues in sidebar or bottom panel
    - Click issue to navigate to block
    - Auto-fix button where applicable
 
 3. **Email client testing setup**:
+
    - Test HTML output in:
      - Gmail (web, iOS, Android)
      - Outlook (desktop, web)
@@ -1586,6 +1682,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Adjust React Email output for compatibility
 
 4. **Markdown import improvements**:
+
    - Test paste from ChatGPT, Notion, Google Docs, Word
    - Handle common markdown variants
    - Improve heading detection
@@ -1593,6 +1690,7 @@ Reuses novel's bubble menu with email-appropriate controls:
    - Code block language detection
 
 5. **Keyboard shortcuts**:
+
    ```ts
    // Add to CustomKeymap extension
    - Cmd/Ctrl + B: Bold
@@ -1607,30 +1705,35 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 6. **Undo/redo improvements**:
+
    - Ensure undo works across all operations
    - Preserve block selections
    - Undo for global styles changes
    - Undo for header edits
 
 7. **Performance optimizations**:
+
    - Debounce expensive computations
    - Memoize transformer functions
    - Optimize re-renders in attributes panel
    - Lazy load preview iframe
 
 8. **Accessibility**:
+
    - Keyboard navigation for all panels
    - ARIA labels on buttons
    - Focus management
    - Screen reader announcements for block operations
 
 9. **Error handling**:
+
    - Graceful handling of malformed JSON
    - Network error handling for AI/uploads
    - Validation error messages
    - Recovery mechanisms
 
 10. **Documentation**:
+
     - User guide for email builder
     - Block type reference
     - Variables guide
@@ -1644,6 +1747,7 @@ Reuses novel's bubble menu with email-appropriate controls:
     - Visual regression tests for rendered output
 
 **Success Criteria**:
+
 - All lint issues caught and displayed
 - Exported HTML renders correctly in major email clients
 - Markdown paste works reliably from common sources
@@ -1656,6 +1760,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Test coverage > 80%
 
 **Files to Create**:
+
 - `/lib/email-linting.ts` – Linting engine
 - `/components/linting-panel.tsx` – Linting UI
 - `/tests/email-transform.test.ts` – Transformer tests
@@ -1671,37 +1776,44 @@ Reuses novel's bubble menu with email-appropriate controls:
 ### Potential Phase 11+: Advanced Features
 
 - **Template library & presets**
+
   - Pre-built email templates
   - Categorized by use case (newsletter, transactional, marketing)
   - One-click insert
 
 - **Collaboration features**
+
   - Real-time collaborative editing (using Tiptap Collaboration)
   - Comments and suggestions
   - Version history
   - Team permissions
 
 - **A/B testing support**
+
   - Define variants
   - Conditional content blocks
   - Analytics integration
 
 - **Advanced layouts**
+
   - 3+ column sections
   - Complex table layouts
   - Nested sections
 
 - **Dynamic content**
+
   - Conditional logic (`if/else` for variables)
   - Loops (repeat blocks for lists)
   - Custom Liquid-like templating
 
 - **Integration APIs**
+
   - Direct send via Resend/SendGrid/etc.
   - CRM integrations
   - Import from other platforms
 
 - **Enhanced media**
+
   - GIF support
   - Video thumbnails linking to video
   - Background images for sections
@@ -1716,18 +1828,21 @@ Reuses novel's bubble menu with email-appropriate controls:
 ## Success Metrics
 
 ### Technical Metrics
+
 - **Email client compatibility**: 95%+ rendering accuracy across major clients
 - **Performance**: Editor loads in < 2s, transforms in < 500ms
 - **Test coverage**: > 80% for core functionality
 - **Bug rate**: < 5 critical bugs per release
 
 ### User Experience Metrics
+
 - **Time to first email**: < 10 minutes for new user
 - **Block insertion time**: < 3s from slash command to inserted block
 - **Style update latency**: < 100ms visual feedback
 - **Export success rate**: 100% (no failed exports)
 
 ### Email Quality Metrics
+
 - **Valid HTML output**: 100% W3C validation pass rate
 - **Deliverability**: < 1% bounce rate due to HTML issues
 - **Render consistency**: 90%+ visual match between editor and email clients
@@ -1750,7 +1865,8 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Phase**: Planning complete, ready to begin Phase 1
 
-**Next Steps**: 
+**Next Steps**:
+
 1. Review and approve this PRD
 2. Set up project board with phase tickets
 3. Begin Phase 1 implementation
@@ -1758,6 +1874,5 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 ---
 
-*Last updated: [Auto-generated timestamp]*
-*Version: 2.0*
-
+_Last updated: [Auto-generated timestamp]_
+_Version: 2.0_
