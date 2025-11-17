@@ -53,7 +53,10 @@ const Horizontal = HorizontalRule.extend({
           const start = range.from;
           const end = range.to;
 
-          tr.insert(start - 1, this.type.create(attributes)).delete(tr.mapping.map(start), tr.mapping.map(end));
+          tr.insert(start - 1, this.type.create(attributes)).delete(
+            tr.mapping.map(start),
+            tr.mapping.map(end)
+          );
         },
       }),
     ];

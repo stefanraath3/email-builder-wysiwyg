@@ -1,14 +1,58 @@
 import { useCurrentEditor } from "@tiptap/react";
 import type { FC } from "react";
+import { useEffect, useState } from "react";
 import Moveable from "react-moveable";
 
 export const ImageResizer: FC = () => {
   const { editor } = useCurrentEditor();
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  const [selectionKey, setSelectionKey] = useState<number>(0);
 
-  if (!editor?.isActive("image")) return null;
+  useEffect(() => {
+    if (!editor?.isActive("image")) {
+      setTarget(null);
+      setSelectionKey(0);
+      return;
+    }
+
+    const updateTarget = () => {
+      const selectedNode = document.querySelector(
+        ".ProseMirror-selectednode"
+      ) as HTMLElement;
+      if (selectedNode) {
+        setTarget(selectedNode);
+        // Use selection position as key to force Moveable to re-initialize when image moves
+        const selection = editor.state.selection;
+        if (selection.from !== undefined) {
+          setSelectionKey(selection.from);
+        }
+      }
+    };
+
+    // Update target immediately
+    updateTarget();
+
+    // Listen to selection updates
+    const handleUpdate = () => {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        updateTarget();
+      });
+    };
+
+    editor.on("selectionUpdate", handleUpdate);
+    editor.on("update", handleUpdate);
+
+    return () => {
+      editor.off("selectionUpdate", handleUpdate);
+      editor.off("update", handleUpdate);
+    };
+  }, [editor]);
+
+  if (!editor?.isActive("image") || !target) return null;
 
   const updateMediaSize = () => {
-    const imageInfo = document.querySelector(".ProseMirror-selectednode") as HTMLImageElement;
+    const imageInfo = target as HTMLImageElement;
     if (imageInfo) {
       const selection = editor.state.selection;
       const setImage = editor.commands.setImage as (options: {
@@ -28,7 +72,8 @@ export const ImageResizer: FC = () => {
 
   return (
     <Moveable
-      target={document.querySelector(".ProseMirror-selectednode") as HTMLDivElement}
+      key={selectionKey}
+      target={target}
       container={null}
       origin={false}
       /* Resize event edges */
