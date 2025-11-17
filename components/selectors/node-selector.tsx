@@ -28,69 +28,69 @@ const items: SelectorItem[] = [
   {
     name: "Text",
     icon: TextIcon,
-    command: (editor) => editor.chain().focus().clearNodes().run(),
+    command: (editor) => editor?.chain().focus().clearNodes().run(),
     // I feel like there has to be a more efficient way to do this – feel free to PR if you know how!
     isActive: (editor) =>
-      editor.isActive("paragraph") &&
-      !editor.isActive("bulletList") &&
-      !editor.isActive("orderedList"),
+      !!editor?.isActive("paragraph") &&
+      !editor?.isActive("bulletList") &&
+      !editor?.isActive("orderedList"),
   },
   {
     name: "Heading 1",
     icon: Heading1,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleHeading({ level: 1 }).run(),
-    isActive: (editor) => editor.isActive("heading", { level: 1 }),
-  },
+      editor?.chain().focus().clearNodes().toggleHeading({ level: 1 }).run(),
+    isActive: (editor) => editor?.isActive("heading", { level: 1 }),
+  } as SelectorItem,
   {
     name: "Heading 2",
     icon: Heading2,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleHeading({ level: 2 }).run(),
-    isActive: (editor) => editor.isActive("heading", { level: 2 }),
-  },
+      editor?.chain().focus().clearNodes().toggleHeading({ level: 2 }).run(),
+    isActive: (editor) => !!editor?.isActive("heading", { level: 2 }),
+  } as SelectorItem,
   {
     name: "Heading 3",
     icon: Heading3,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleHeading({ level: 3 }).run(),
-    isActive: (editor) => editor.isActive("heading", { level: 3 }),
-  },
+      editor?.chain().focus().clearNodes().toggleHeading({ level: 3 }).run(),
+    isActive: (editor) => !!editor?.isActive("heading", { level: 3 }),
+  } as SelectorItem,
   {
     name: "To-do List",
     icon: CheckSquare,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleTaskList().run(),
-    isActive: (editor) => editor.isActive("taskItem"),
-  },
+      editor?.chain().focus().clearNodes().toggleTaskList().run(),
+    isActive: (editor) => !!editor?.isActive("taskItem"),
+  } as SelectorItem,
   {
     name: "Bullet List",
     icon: ListOrdered,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleBulletList().run(),
-    isActive: (editor) => editor.isActive("bulletList"),
-  },
+      editor?.chain().focus().clearNodes().toggleBulletList().run(),
+    isActive: (editor) => !!editor?.isActive("bulletList"),
+  } as SelectorItem,
   {
     name: "Numbered List",
     icon: ListOrdered,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleOrderedList().run(),
-    isActive: (editor) => editor.isActive("orderedList"),
-  },
+      editor?.chain().focus().clearNodes().toggleOrderedList().run(),
+    isActive: (editor) => !!editor?.isActive("orderedList"),
+  } as SelectorItem,
   {
     name: "Quote",
     icon: TextQuote,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleBlockquote().run(),
-    isActive: (editor) => editor.isActive("blockquote"),
-  },
+      editor?.chain().focus().clearNodes().toggleBlockquote().run(),
+    isActive: (editor) => !!editor?.isActive("blockquote"),
+  } as SelectorItem,
   {
     name: "Code",
     icon: Code,
     command: (editor) =>
-      editor.chain().focus().clearNodes().toggleCodeBlock().run(),
-    isActive: (editor) => editor.isActive("codeBlock"),
-  },
+      editor?.chain().focus().clearNodes().toggleCodeBlock().run(),
+    isActive: (editor) => !!editor?.isActive("codeBlock"),
+  } as SelectorItem,
 ];
 interface NodeSelectorProps {
   open: boolean;
