@@ -1,9 +1,28 @@
 import { useCurrentEditor } from "@tiptap/react";
+import { useEffect, useState } from "react";
 import type { FC } from "react";
 import Moveable from "react-moveable";
 
 export const ImageResizer: FC = () => {
   const { editor } = useCurrentEditor();
+
+  const [selectionKey, setSelectionKey] = useState(0);
+
+  // Recreate / reposition the moveable handles when the editor document changes
+  // (e.g. when an image node is dragged to a different block).
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleTransaction = () => {
+      setSelectionKey((prev) => prev + 1);
+    };
+
+    editor.on("transaction", handleTransaction);
+
+    return () => {
+      editor.off("transaction", handleTransaction);
+    };
+  }, [editor]);
 
   if (!editor?.isActive("image")) return null;
 
@@ -30,6 +49,7 @@ export const ImageResizer: FC = () => {
 
   return (
     <Moveable
+      key={selectionKey}
       target={
         document.querySelector(".ProseMirror-selectednode") as HTMLDivElement
       }
