@@ -290,142 +290,57 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   white-space: pre-wrap;
 }
 
-/* Bubble menu specific styling - TipTap v3 uses Floating UI */
+/* Bubble menu specific styling */
 .bubble-menu {
-  background-color: hsl(var(--background)) !important;
+  background-color: hsl(var(--background));
   border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-/* Ensure BubbleMenu component (Floating UI) has proper background */
-/* TipTap v3 BubbleMenu renders a div directly */
-div[data-bubble-menu],
-div[class*="bubble-menu"],
-div[class*="BubbleMenu"] {
-  background-color: hsl(var(--background)) !important;
-  opacity: 1 !important;
-}
-
-/* Ensure all direct children of bubble menu have background */
-div[data-bubble-menu] > *,
-div[class*="bubble-menu"] > *,
-div[class*="BubbleMenu"] > * {
-  background-color: hsl(var(--background)) !important;
-}
-
-/* Ensure flex containers in bubble menu have background */
-div[data-bubble-menu] .flex,
-div[class*="bubble-menu"] .flex,
-div[class*="BubbleMenu"] .flex {
-  background-color: hsl(var(--background)) !important;
-}
-
-/* Target the actual BubbleMenu wrapper div that TipTap v3 creates */
-div[style*="position: absolute"],
-div[style*="position:fixed"] {
-  /* Only apply to bubble menu contexts, not all positioned divs */
-}
-
-/* More specific: target divs that are children of ProseMirror and have bubble menu classes */
-.ProseMirror ~ div[class*="flex"][class*="rounded-md"],
-.ProseMirror ~ div[class*="flex"][class*="border"],
-body
-  > div[class*="flex"][class*="rounded-md"][class*="border"][class*="shadow-xl"],
-body > div[class*="flex"][class*="rounded-md"][class*="border-muted"],
-div[class*="flex"][class*="w-fit"][class*="max-w-90vw"][class*="rounded-md"][class*="border"] {
-  background-color: hsl(var(--background)) !important;
-  opacity: 1 !important;
-}
-
-/* Target any div with bg-background class that's positioned absolutely/fixed */
-div[class*="bg-background"][style*="position"],
-div[class*="bg-background"][style*="absolute"],
-div[class*="bg-background"][style*="fixed"] {
-  background-color: hsl(var(--background)) !important;
-  opacity: 1 !important;
-}
-
-/* Universal rule: any absolutely positioned div with flex, rounded-md, and border classes */
-div[style*="position: absolute"][class*="flex"][class*="rounded-md"][class*="border"],
-div[style*="position: fixed"][class*="flex"][class*="rounded-md"][class*="border"] {
-  background-color: hsl(var(--background)) !important;
-  opacity: 1 !important;
-}
-
-/* Most aggressive: target any div that matches the bubble menu pattern exactly */
-div.flex.w-fit.max-w-\[90vw\],
-div.flex.w-fit.max-w-90vw,
-div[class*="flex"][class*="w-fit"][class*="max-w"],
-div[class*="flex"][class*="rounded-md"][class*="border"][class*="shadow-xl"],
-div[class*="flex"][class*="rounded-md"][class*="border-muted"][class*="bg-background"] {
-  background-color: hsl(var(--background)) !important;
-  opacity: 1 !important;
-}
-
-/* Ensure bg-background class actually applies background */
-.bg-background,
-[class*="bg-background"] {
-  background-color: hsl(var(--background)) !important;
-  opacity: 1 !important;
-}
-
-/* Target all children of elements with bg-background to ensure they inherit */
-.bg-background > *,
-[class*="bg-background"] > * {
-  background-color: inherit !important;
-}
-
-/* Ensure all buttons in bubble menu have proper backgrounds */
-div[data-bubble-menu] button,
-div[class*="bubble-menu"] button,
-div[class*="BubbleMenu"] button {
-  transition: background-color 0.15s ease;
-  background-color: transparent !important;
-}
-
-/* Hover effects for bubble menu buttons */
-div[data-bubble-menu] button:hover,
-div[class*="bubble-menu"] button:hover,
-div[class*="BubbleMenu"] button:hover {
-  background-color: hsl(var(--accent)) !important;
-}
-
-/* Legacy Tippy.js support (for TipTap v2 compatibility) */
+/* Ensure tippy-box (bubble menu) has proper background */
 .tippy-box {
   background-color: hsl(var(--background)) !important;
 }
 
+/* Ensure tippy-box content wrapper has proper background */
 .tippy-box > div {
   background-color: hsl(var(--background)) !important;
 }
 
+/* Ensure bubble menu container has background */
 [data-tippy-root] > div {
   background-color: hsl(var(--background)) !important;
   border-radius: 0.5rem;
 }
 
+/* Ensure all direct children of tippy-box content have background */
 .tippy-box > div > * {
   background-color: hsl(var(--background)) !important;
 }
 
+/* Ensure EditorBubbleItem divs in bubble menu have proper background matching container */
 [data-tippy-root] > div > div {
   background-color: hsl(var(--background)) !important;
 }
 
+/* Ensure all flex containers in bubble menu have background */
 [data-tippy-root] .flex {
   background-color: hsl(var(--background)) !important;
 }
 
+/* Ensure all buttons in bubble menu have proper backgrounds (ghost variant buttons should be transparent by default) */
 [data-tippy-root] button {
   transition: background-color 0.15s ease;
   background-color: transparent !important;
 }
 
+/* Hover effects for bubble menu buttons */
 [data-tippy-root] button:hover {
   background-color: hsl(var(--accent)) !important;
 }
 
+/* Ensure buttons inside EditorBubbleItem have proper backgrounds and hover effects */
 [data-tippy-root] > div > div > button {
   background-color: transparent !important;
 }
