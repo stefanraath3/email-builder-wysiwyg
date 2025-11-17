@@ -59,7 +59,7 @@
     "@tiptap/starter-kit": "^3.10.7",
     "@tiptap/suggestion": "^3.10.7",
     "@upstash/ratelimit": "^1.0.1",
-    "@vercel/blob": "^0.22.1",
+    "@vercel/blob": "^0.22.3",
     "@vercel/kv": "^1.0.1",
     "ai": "^5.0.93",
     "autoprefixer": "^10.4.17",
