@@ -1863,7 +1863,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 ## Current Status
 
-**Phase**: Phase 1 ✅ COMPLETE
+### Phase 1: EmailTemplate Wrapper + JSON Visibility ✅ COMPLETE
 
 **What was built**:
 
@@ -1888,7 +1888,45 @@ Reuses novel's bubble menu with email-appropriate controls:
 - ✅ All existing novel features work (slash menu, bubble menu, drag handle, markdown, AI, uploads)
 - ✅ Theme system integration (dark/light mode support)
 
-**Next Phase**: Phase 2 - Email-Aware Slash Menu + Block Taxonomy
+---
+
+### Phase 2: Email-Aware Slash Menu + Block Taxonomy ✅ COMPLETE
+
+**What was built**:
+
+1. ✅ Created `/components/email-slash-command.tsx` with email-focused block taxonomy
+   - TEXT category: Text, Heading 1-3, Bullet List, Numbered List, Quote, Code Block
+   - MEDIA category: Image, YouTube, X (Twitter)
+   - LAYOUT category: Button, Divider, Section, Social Links, Unsubscribe Footer (placeholders)
+   - UTILITY category: HTML, Variable (placeholders)
+2. ✅ Added category headers styled like Resend (non-selectable, uppercase, muted)
+3. ✅ Removed non-email blocks: "To-do List", "Send Feedback"
+4. ✅ Created `/components/selectors/email-node-selector.tsx` for bubble menu
+   - Email-appropriate blocks only (Text, H1-H3, Lists, Quote, Code)
+   - Removed "To-do List" from bubble menu
+5. ✅ Updated `/components/email-template-editor.tsx` to use email-specific components
+   - Imports `emailSlashCommand` and `emailSuggestionItems`
+   - Imports `EmailNodeSelector` for bubble menu
+   - Added category header rendering logic
+6. ✅ Added `.email-block-placeholder` CSS styling in `/styles/prosemirror.css`
+   - Muted background, dashed border, italic text, centered
+7. ✅ Preserved original editor (no changes to shared components)
+   - `/components/slash-command.tsx` unchanged
+   - `/components/selectors/node-selector.tsx` unchanged
+   - `/components/advanced-editor.tsx` unchanged
+
+**Validated**:
+
+- ✅ Slash menu shows email-categorized blocks with category headers
+- ✅ All TEXT blocks insert and work correctly
+- ✅ All MEDIA blocks insert and work correctly (Image upload, YouTube/X prompts)
+- ✅ LAYOUT/UTILITY placeholder blocks insert with "[Block Name - Coming Soon]" styling
+- ✅ Can drag/reorder all blocks using GlobalDragHandle
+- ✅ Bubble menu NodeSelector shows only email-appropriate blocks
+- ✅ Original editor at `/app/page.tsx` remains fully functional
+- ✅ No duplicate key errors in React rendering
+
+**Next Phase**: Phase 3 - Block Identity & Selection System
 
 ---
 
