@@ -53,7 +53,7 @@ export function AttributesPanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-[400px] sm:max-w-[400px] bg-background"
+        className="w-[400px] sm:max-w-[400px] p-6 bg-[hsl(var(--background))]"
       >
         <SheetHeader>
           <SheetTitle>Block Attributes</SheetTitle>
