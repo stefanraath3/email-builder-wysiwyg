@@ -146,8 +146,16 @@ export function updateNodeAttrsByUid(
 /**
  * Convert BlockStyles object to inline CSS string
  * Used in renderHTML to apply styles in editor view
+ *
+ * The optional options parameter allows callers to tweak behavior for
+ * specific node types (e.g. images need special alignment handling).
  */
-export function convertBlockStylesToInlineCSS(styles: BlockStyles): string {
+export function convertBlockStylesToInlineCSS(
+  styles: BlockStyles,
+  options?: {
+    isImage?: boolean;
+  }
+): string {
   const cssProps: string[] = [];
 
   if (styles.backgroundColor) {
@@ -165,8 +173,29 @@ export function convertBlockStylesToInlineCSS(styles: BlockStyles): string {
   if (styles.lineHeight) {
     cssProps.push(`line-height: ${styles.lineHeight}`);
   }
+
+  // Alignment:
+  // - For normal text blocks we use text-align
+  // - For images we emulate email-style alignment using display + margins
   if (styles.textAlign) {
-    cssProps.push(`text-align: ${styles.textAlign}`);
+    if (options?.isImage) {
+      // Images are inline by default; to align them visually we need to
+      // make them block-level and use margins.
+      cssProps.push("display: block");
+
+      if (styles.textAlign === "center") {
+        cssProps.push("margin-left: auto");
+        cssProps.push("margin-right: auto");
+      } else if (styles.textAlign === "right") {
+        cssProps.push("margin-left: auto");
+        cssProps.push("margin-right: 0");
+      } else if (styles.textAlign === "left") {
+        cssProps.push("margin-left: 0");
+        cssProps.push("margin-right: auto");
+      }
+    } else {
+      cssProps.push(`text-align: ${styles.textAlign}`);
+    }
   }
   if (styles.borderRadius !== undefined) {
     cssProps.push(`border-radius: ${styles.borderRadius}px`);

@@ -17,6 +17,15 @@ export const EmailImage = TiptapImage.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
+      // Width/height are required so the ImageResizer can persist size
+      // via the setImage() command. Without these, resized images snap
+      // back to their natural dimensions on the next render.
+      width: {
+        default: null,
+      },
+      height: {
+        default: null,
+      },
       styles: {
         default: {},
         parseHTML: (element) => {
@@ -39,7 +48,11 @@ export const EmailImage = TiptapImage.extend({
           }
           return {
             "data-styles": JSON.stringify(attributes.styles),
-            style: convertBlockStylesToInlineCSS(attributes.styles),
+            // Images need special treatment for alignment, so we pass
+            // the isImage flag to convertBlockStylesToInlineCSS.
+            style: convertBlockStylesToInlineCSS(attributes.styles, {
+              isImage: true,
+            }),
           };
         },
       },

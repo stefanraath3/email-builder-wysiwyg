@@ -12,13 +12,16 @@ import {
 } from "./ui/sheet";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
 import { Copy } from "lucide-react";
-import { Accordion } from "./ui/accordion";
-import { AppearanceSection } from "./attributes-panel/appearance-section";
-import { TypographySection } from "./attributes-panel/typography-section";
-import { LayoutSection } from "./attributes-panel/layout-section";
-import { ImageSection } from "./attributes-panel/image-section";
 import type { BlockStyles } from "@/types/block-styles";
+import { AlignmentControl } from "./attributes-panel/alignment-control";
+import {
+  StyleDropdownMenu,
+  type StyleOption,
+} from "./attributes-panel/style-dropdown-menu";
+import { StyleControl } from "./attributes-panel/style-control";
 
 type AttributesPanelProps = {
   open: boolean;
@@ -27,13 +30,10 @@ type AttributesPanelProps = {
   blockType: string | null;
 };
 
-const TEXT_BLOCKS = ["paragraph", "heading", "blockquote"];
-const IMAGE_BLOCKS = ["image"];
-const CODE_BLOCKS = ["codeBlock"];
-
 /**
- * Interactive Attributes Panel component for Phase 5
- * Allows users to customize block appearance, typography, and layout
+ * Interactive Attributes Panel (Resend-inspired)
+ * - Alignment toggle at top for all blocks
+ * - Styles section with + dropdown to add/remove style overrides
  */
 export function AttributesPanel({
   open,
@@ -43,14 +43,34 @@ export function AttributesPanel({
 }: AttributesPanelProps) {
   const { editor } = useEditor();
   const [styles, setStyles] = useState<BlockStyles>({});
+  const [activeStyleKeys, setActiveStyleKeys] = useState<Set<StyleOption>>(
+    new Set()
+  );
 
-  // Load current styles from node
+  // Load current styles from node and determine which style keys are active
   useEffect(() => {
     if (!editor || !blockUid) return;
 
     const result = findNodeByUid(editor, blockUid);
     if (result) {
-      setStyles((result.node.attrs.styles as BlockStyles) || {});
+      const nodeStyles = (result.node.attrs.styles as BlockStyles) || {};
+      setStyles(nodeStyles);
+
+      // Determine which style keys have values
+      const active = new Set<StyleOption>();
+      if (nodeStyles.backgroundColor) active.add("backgroundColor");
+      if (nodeStyles.borderRadius !== undefined) active.add("borderRadius");
+      if (nodeStyles.borderWidth !== undefined) active.add("borderWidth");
+      if (nodeStyles.borderStyle) active.add("borderStyle");
+      if (nodeStyles.borderColor) active.add("borderColor");
+      if (nodeStyles.textColor) active.add("textColor");
+      if (nodeStyles.fontSize) active.add("fontSize");
+      if (nodeStyles.fontWeight) active.add("fontWeight");
+      if (nodeStyles.lineHeight) active.add("lineHeight");
+      if (nodeStyles.textDecoration) active.add("textDecoration");
+      if (nodeStyles.padding) active.add("padding");
+
+      setActiveStyleKeys(active);
     }
   }, [editor, blockUid]);
 
@@ -72,10 +92,33 @@ export function AttributesPanel({
     updateNodeAttrsByUid(editor, blockUid, { styles: newStyles });
   };
 
-  // Reset to defaults
+  // Add a style control
+  const handleAddStyle = (styleKey: StyleOption) => {
+    setActiveStyleKeys((prev) => new Set(prev).add(styleKey));
+  };
+
+  // Remove a style control
+  const handleRemoveStyle = (styleKey: StyleOption) => {
+    setActiveStyleKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(styleKey);
+      return next;
+    });
+
+    // Remove the style value from the node
+    const newStyles = { ...styles };
+    delete newStyles[styleKey];
+    setStyles(newStyles);
+    if (editor && blockUid) {
+      updateNodeAttrsByUid(editor, blockUid, { styles: newStyles });
+    }
+  };
+
+  // Reset to defaults - clears all style overrides
   const resetStyles = () => {
     if (!editor || !blockUid) return;
     setStyles({});
+    setActiveStyleKeys(new Set());
     updateNodeAttrsByUid(editor, blockUid, { styles: {} });
   };
 
@@ -85,10 +128,6 @@ export function AttributesPanel({
     }
   };
 
-  const isTextBlock = blockType && TEXT_BLOCKS.includes(blockType);
-  const isImageBlock = blockType && IMAGE_BLOCKS.includes(blockType);
-  const isCodeBlock = blockType && CODE_BLOCKS.includes(blockType);
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -96,25 +135,24 @@ export function AttributesPanel({
         className="w-[400px] sm:max-w-[400px] p-6 bg-[hsl(var(--background))] overflow-y-auto"
       >
         <SheetHeader>
-          <SheetTitle>Block Attributes</SheetTitle>
-          <SheetDescription>
-            Customize block appearance and styling
-          </SheetDescription>
+          <SheetTitle>Attributes</SheetTitle>
+          <SheetDescription>Customize block styling</SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="mt-6 space-y-4">
           {!blockUid ? (
             <div className="text-sm text-muted-foreground">
               No block selected
             </div>
           ) : (
             <>
-              {/* Block Info */}
+              {/* Block Type */}
               <div className="space-y-2">
                 <div className="text-xs text-muted-foreground">Type</div>
                 <Badge variant="outline">{blockType || "unknown"}</Badge>
               </div>
 
+              {/* Block UID */}
               <div>
                 <div className="text-xs text-muted-foreground mb-2">UID</div>
                 <div className="flex items-center gap-2">
@@ -133,28 +171,51 @@ export function AttributesPanel({
                 </div>
               </div>
 
-              {/* Style Controls */}
-              <Accordion
-                type="multiple"
-                defaultValue={["appearance", "layout"]}
-                className="w-full"
-              >
-                <AppearanceSection styles={styles} onChange={updateStyle} />
+              <Separator />
 
-                {isTextBlock && (
-                  <TypographySection styles={styles} onChange={updateStyle} />
-                )}
-
-                {isImageBlock && (
-                  <ImageSection styles={styles} onChange={updateStyle} />
-                )}
-
-                <LayoutSection
-                  styles={styles}
-                  onChange={updateStyle}
-                  blockType={blockType}
+              {/* Alignment Control - Always visible for all blocks */}
+              <div>
+                <Label className="mb-2 block">Alignment</Label>
+                <AlignmentControl
+                  value={styles.textAlign}
+                  onChange={(val) => updateStyle("textAlign", val)}
                 />
-              </Accordion>
+              </div>
+
+              <Separator />
+
+              {/* Styles Section with Dropdown */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Styles</Label>
+                  <StyleDropdownMenu
+                    activeStyles={activeStyleKeys}
+                    onAddStyle={handleAddStyle}
+                    blockType={blockType}
+                  />
+                </div>
+
+                {/* Active Style Controls */}
+                {activeStyleKeys.size === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    No style overrides
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {Array.from(activeStyleKeys).map((styleKey) => (
+                      <StyleControl
+                        key={styleKey}
+                        styleKey={styleKey}
+                        styles={styles}
+                        onChange={updateStyle}
+                        onRemove={() => handleRemoveStyle(styleKey)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Separator />
 
               {/* Reset Button */}
               <Button

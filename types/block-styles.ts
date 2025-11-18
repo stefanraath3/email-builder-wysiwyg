@@ -22,7 +22,7 @@ export interface BlockStyles {
 
   // Layout
   padding?: Padding;
-  textAlign?: "left" | "center" | "right" | "justify";
+  textAlign?: "left" | "center" | "right";
 
   // Media-specific
   width?: number;

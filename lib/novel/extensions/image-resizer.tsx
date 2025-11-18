@@ -32,17 +32,18 @@ export const ImageResizer: FC = () => {
     ) as HTMLImageElement;
     if (imageInfo) {
       const selection = editor.state.selection;
-      const setImage = editor.commands.setImage as (options: {
-        src: string;
-        width: number;
-        height: number;
-      }) => boolean;
 
-      setImage({
-        src: imageInfo.src,
+      // Get the current node to preserve styles
+      const node = editor.state.doc.nodeAt(selection.from);
+      const currentStyles = node?.attrs?.styles || {};
+
+      // Update width/height while preserving styles
+      editor.commands.updateAttributes("image", {
         width: Number(imageInfo.style.width.replace("px", "")),
         height: Number(imageInfo.style.height.replace("px", "")),
+        styles: currentStyles, // Preserve existing styles including alignment
       });
+
       editor.commands.setNodeSelection(selection.from);
     }
   };
