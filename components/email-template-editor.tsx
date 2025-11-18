@@ -34,6 +34,7 @@ import {
   findNodeByUidJson,
   updateNodeAttrsByUid,
 } from "@/lib/email-blocks";
+import { ActiveBlockTestPanel } from "./active-block-test-panel";
 
 const extensions = [...emailExtensions, emailSlashCommand];
 
@@ -182,6 +183,9 @@ export function EmailTemplateEditor() {
               <Separator orientation="vertical" />
               <ColorSelector open={openColor} onOpenChange={setOpenColor} />
             </GenerativeMenuSwitch>
+
+            {/* Active Block Test Panel (Dev Only) */}
+            <ActiveBlockTestPanel />
           </EditorContent>
         </EditorRoot>
       </div>

@@ -1941,7 +1941,83 @@ Reuses novel's bubble menu with email-appropriate controls:
 - ✅ Original editor at `/app/page.tsx` remains fully functional
 - ✅ No duplicate key errors in React rendering
 
-**Next Phase**: Phase 3 - Block Identity & Selection System
+---
+
+### Phase 3: Block Identity (UniqueID) + Active Block Hook 🚧 IN PROGRESS
+
+#### Part 1: UniqueID Extension ✅ COMPLETE
+
+**What was built**:
+
+1. ✅ Installed `@tiptap/extension-unique-id@2.27.1` (compatible with TipTap 2.x)
+2. ✅ Configured UniqueID extension in `/components/email-extensions.ts`:
+   - `attributeName: "uid"`
+   - `types: ["paragraph", "heading", "blockquote", "codeBlock", "bulletList", "orderedList", "taskList", "taskItem", "image", "youtube", "twitter"]`
+   - `generateID: () => crypto.randomUUID()`
+3. ✅ Added to `emailExtensions` array (positioned after StarterKit)
+4. ✅ Verified UIDs appear in JSON debug panel for all block types
+
+**Validated**:
+
+- ✅ Every block node in JSON has a unique `uid` attribute
+- ✅ UIDs are pure UUIDs (format: `a1b2c3d4-5e6f-7890-...`)
+- ✅ UIDs persist across normal editing operations
+- ✅ Paste/drag operations correctly regenerate UIDs to avoid duplicates
+- ✅ Block-level nodes (paragraphs, headings, lists) maintain stable UIDs
+- ✅ List container blocks keep stable UIDs when reordering children
+- ✅ No performance degradation
+
+#### Part 2: Block ID Helper Utilities ✅ COMPLETE
+
+**What was built**:
+
+1. ✅ Created `/lib/email-blocks.ts` with comprehensive helper utilities:
+   - `BLOCK_UID_ATTR` constant for UID attribute name
+   - `findNodeByUidJson(doc, uid)` - Pure function to find nodes in JSON content, returns `{ node, path }`
+   - `findNodeByUid(editor, uid)` - Find nodes in live editor, returns `{ node, pos }`
+   - `updateNodeAttrsByUid(editor, uid, attrs)` - Safely update node attrs, returns boolean
+2. ✅ Added dev helper to `/components/email-template-editor.tsx`:
+   - Exposes `window.__emailEditor` in development mode
+   - Provides editor instance, template, and helper functions for console testing
+3. ✅ All helpers are type-safe with proper TypeScript types
+4. ✅ Edge cases handled: null checks, missing UIDs, safe no-ops
+
+**Validated**:
+
+- ✅ JSON helper correctly finds nodes and returns index paths
+- ✅ Editor helper correctly finds nodes and returns ProseMirror positions
+- ✅ Update helper safely merges attrs without overwriting existing properties
+- ✅ Update helper returns `true` when node found, `false` when not found
+- ✅ No exceptions thrown for missing UIDs (safe no-op behavior)
+- ✅ Dev helpers accessible via browser console for manual testing
+
+#### Part 3: Active Block Hook ✅ COMPLETE
+
+**What was built**:
+
+1. ✅ Created `/hooks/use-active-block.ts` with `ActiveBlock` type:
+   - `{ uid: string; type: string; pos: number; domRect: DOMRect | null } | null`
+2. ✅ Implemented `useActiveBlock()` hook:
+   - Uses `useEditor()` to access the live TipTap editor instance
+   - Listens to `selectionUpdate` and `transaction` events
+   - Resolves the active block as the nearest ancestor node with `attrs.uid`
+3. ✅ Added explicit support for `NodeSelection` (e.g. images):
+   - Handles image selections by reading `selection.node` first
+   - Falls back to `$from`-based traversal for text selections
+4. ✅ Added `ActiveBlockTestPanel` dev UI in `/components/active-block-test-panel.tsx`:
+   - Shows current `uid`, `type`, `pos`, and `domRect`
+   - Mirrors Resend-style “hover block shows controls” behaviour for debugging
+
+**Validated**:
+
+- ✅ Active block updates correctly across paragraphs, headings, lists, and images
+- ✅ UIDs reported by the hook match the JSON debug panel
+- ✅ `domRect` matches the on-screen block position and dimensions
+- ✅ Dragging blocks updates `pos`/`domRect` while keeping `uid` stable
+- ✅ Undo/redo and paste operations keep active block in sync with editor state
+- ✅ Hook avoids unnecessary React re-renders via structural equality guard on state
+
+**Next**: Part 4 - Visual feedback for active block (block highlighting)
 
 ---
 
