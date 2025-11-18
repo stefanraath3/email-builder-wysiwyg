@@ -210,5 +210,15 @@ export const emailExtensions = [
   TextStyle,
   Color,
   CustomKeymap,
-  GlobalDragHandle,
+  GlobalDragHandle.configure({
+    dragHandleWidth: 20,
+    scrollTreshold: 100,
+    excludedTags: [],
+    customNodes: [
+      "youtube",
+      "twitter",
+      "image",
+      // Add other email-specific block types here as they're implemented
+    ],
+  }),
 ];

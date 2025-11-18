@@ -20,7 +20,7 @@ import UpdatedImage from "./updated-image";
 import CharacterCount from "@tiptap/extension-character-count";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Youtube from "@tiptap/extension-youtube";
-import GlobalDragHandle from "tiptap-extension-global-drag-handle";
+import GlobalDragHandle from "./global-drag-handle";
 
 const PlaceholderExtension = Placeholder.configure({
   placeholder: ({ node }) => {
