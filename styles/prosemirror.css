@@ -438,3 +438,14 @@ span[style] > strong {
 mark[style] > strong {
   color: inherit;
 }
+
+/* Email block placeholder styling */
+.email-block-placeholder {
+  background: hsl(var(--muted) / 0.3);
+  border: 1px dashed hsl(var(--muted-foreground));
+  padding: 1rem;
+  border-radius: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+  text-align: center;
+}

@@ -20,16 +20,16 @@ import { emailExtensions } from "@/components/email-extensions";
 import { ColorSelector } from "./selectors/color-selector";
 import { LinkSelector } from "./selectors/link-selector";
 import { MathSelector } from "./selectors/math-selector";
-import { NodeSelector } from "./selectors/node-selector";
+import { EmailNodeSelector } from "./selectors/email-node-selector";
 import { Separator } from "./ui/separator";
 import GenerativeMenuSwitch from "./generative/generative-menu-switch";
 import { uploadFn } from "./image-upload";
 import { TextButtons } from "./selectors/text-buttons";
-import { slashCommand, suggestionItems } from "./slash-command";
+import { emailSlashCommand, emailSuggestionItems } from "./email-slash-command";
 import TemplateHeader from "./template-header";
 import EmailTemplateDebugPanel from "./email-template-debug-panel";
 
-const extensions = [...emailExtensions, slashCommand];
+const extensions = [...emailExtensions, emailSlashCommand];
 
 /**
  * Main email template editor component
@@ -104,31 +104,48 @@ export function EmailTemplateEditor() {
                 No results
               </EditorCommandEmpty>
               <EditorCommandList>
-                {suggestionItems.map((item) => (
-                  <EditorCommandItem
-                    value={item.title}
-                    onCommand={(val) => item.command?.(val)}
-                    className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
-                    key={item.title}
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md border border-muted bg-background">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="font-medium">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.description}
-                      </p>
-                    </div>
-                  </EditorCommandItem>
-                ))}
+                {emailSuggestionItems.map((item, index) => {
+                  // Check if this is a category header
+                  const isCategoryHeader =
+                    (item as any).isCategoryHeader === true;
+
+                  if (isCategoryHeader) {
+                    return (
+                      <div
+                        key={`category-${item.title}`}
+                        className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        {item.title}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <EditorCommandItem
+                      value={item.title}
+                      onCommand={(val) => item.command?.(val)}
+                      className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
+                      key={`item-${index}-${item.title}`}
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-md border border-muted bg-background">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <p className="font-medium">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.description}
+                        </p>
+                      </div>
+                    </EditorCommandItem>
+                  );
+                })}
               </EditorCommandList>
             </EditorCommand>
 
             {/* Bubble Menu */}
             <GenerativeMenuSwitch open={openAI} onOpenChange={setOpenAI}>
               <Separator orientation="vertical" />
-              <NodeSelector open={openNode} onOpenChange={setOpenNode} />
+              <EmailNodeSelector open={openNode} onOpenChange={setOpenNode} />
               <Separator orientation="vertical" />
               <LinkSelector open={openLink} onOpenChange={setOpenLink} />
               <Separator orientation="vertical" />
