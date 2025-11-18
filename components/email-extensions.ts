@@ -25,6 +25,7 @@ import {
 
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
+import { UniqueID } from "@tiptap/extension-unique-id";
 
 // Configure placeholder for email editor
 const placeholder = Placeholder.configure({
@@ -35,7 +36,7 @@ const placeholder = Placeholder.configure({
 const tiptapLink = TiptapLink.configure({
   HTMLAttributes: {
     class: cx(
-      "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
+      "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer"
     ),
   },
 });
@@ -103,7 +104,9 @@ const starterKit = StarterKit.configure({
   },
   codeBlock: {
     HTMLAttributes: {
-      class: cx("rounded-md bg-muted text-muted-foreground border p-5 font-mono font-medium"),
+      class: cx(
+        "rounded-md bg-muted text-muted-foreground border p-5 font-mono font-medium"
+      ),
     },
   },
   code: {
@@ -162,12 +165,32 @@ const markdownExtension = MarkdownExtension.configure({
 
 const aiHighlight = AIHighlight;
 
+// Configure UniqueID extension for stable block identity
+const uniqueId = UniqueID.configure({
+  attributeName: "uid",
+  types: [
+    "paragraph",
+    "heading",
+    "blockquote",
+    "codeBlock",
+    "bulletList",
+    "orderedList",
+    "taskList",
+    "taskItem",
+    "image",
+    "youtube",
+    "twitter",
+  ],
+  generateID: () => crypto.randomUUID(),
+});
+
 /**
  * Email-specific extensions configuration
  * Includes all necessary extensions for the email editor
  */
 export const emailExtensions = [
   starterKit,
+  uniqueId,
   placeholder,
   tiptapLink,
   tiptapImage,
@@ -189,4 +212,3 @@ export const emailExtensions = [
   CustomKeymap,
   GlobalDragHandle,
 ];
-
