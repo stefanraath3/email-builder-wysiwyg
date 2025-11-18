@@ -494,237 +494,93 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 ---
 
-### Phase 4: Side Rail UI (Attributes Button + GlobalDragHandle)
+### Phase 4: Attributes Handle + Panel Integration ✅ COMPLETE
 
-**Goal**: Add a Resend-style side rail that sits alongside the existing `GlobalDragHandle`, providing an "Open Attributes" button. The side rail follows the same hover-based visibility logic as `GlobalDragHandle` and positions itself in the same left gutter.
+**Goal**: Wire the existing attributes handle (already present in `GlobalDragHandle`) to open a React-based Attributes Sheet that displays and will eventually edit block properties.
 
-#### Implementation Parts
+**Approach**: Rather than creating a separate side rail component, we leveraged the existing `.block-attributes-handle` element that `GlobalDragHandle` already creates and positions. This handle (sliders icon) appears next to blocks on hover, alongside the drag handle.
 
-- **Part 1**: Create `BlockSideRail` component skeleton with positioning logic
-- **Part 2**: Implement hover-based visibility matching `GlobalDragHandle` behavior
-- **Part 3**: Add Attributes button and stub `AttributesPanel` integration
-- **Part 4**: Polish interactions, animations, and edge cases
+**What Was Built**:
 
-#### Part 1: BlockSideRail Component Skeleton + Positioning
+1. **Modified `GlobalDragHandle` click handler** (`lib/novel/extensions/global-drag-handle.ts`):
 
-**Goal**: Create a minimal side rail component that tracks block position using `useActiveBlock`, positioned in the same left gutter as `.drag-handle`.
+   - On attributes handle click, computes the hovered block's start position using `calcNodePos` and `lastHoveredPos`
+   - Sets ProseMirror selection to the clicked block:
+     - Try `NodeSelection.create()` first (works for atomic nodes like images, embeds)
+     - On failure, fall back to `TextSelection` positioned **inside** the block (+1 position)
+     - This ensures `useActiveBlock` can walk up the tree to find the block with UID
+   - Dispatches selection transaction with `scrollIntoView()`
+   - Emits `emailEditor:openAttributes` custom window event to bridge plugin → React
 
-**Deliverables**:
+2. **Created stub `AttributesPanel` component** (`components/attributes-panel.tsx`):
 
-1. **Create `BlockSideRail` component** (`/components/block-side-rail.tsx`):
+   - Uses shadcn `Sheet` (right-side, 400px width, solid background)
+   - Props: `open`, `onOpenChange`, `blockUid`, `blockType`
+   - Displays read-only block info:
+     - Block type (badge)
+     - Block UID (monospace, with copy-to-clipboard button)
+     - Raw `node.attrs` JSON dump (using `findNodeByUid` helper)
+   - Auto-closes if `blockUid` becomes null or node is deleted
+   - Sheet overlay makes editor non-interactive while open
 
-   - Uses `useActiveBlock()` to get `{ uid, type, domRect }`
-   - If `!activeBlock || !activeBlock.domRect`, render `null`
-   - Compute **viewport-fixed position** from `domRect`:
-     - `position: fixed` (matching `.drag-handle` positioning strategy)
-     - `left`: Align to same left gutter as `.drag-handle` (typically `domRect.left - offset`, where offset matches drag handle gutter width)
-     - `top`: Vertically center on block (`domRect.top + domRect.height / 2 - railHeight / 2`)
-     - `z-index`: Same or slightly above `.drag-handle` (50 or 51)
-   - Render a simple placeholder `div` with base styling for visual debugging
+3. **Integrated into `EmailTemplateEditor`** (`components/email-template-editor.tsx`):
 
-2. **Integrate into editor**:
+   - Added `isAttributesOpen` state
+   - Added window event listener for `emailEditor:openAttributes` event
+   - Created `AttributesPanelWrapper` component inside `EditorContent`:
+     - Uses `useActiveBlock()` hook (requires TipTap context)
+     - Passes `activeBlock.uid` and `activeBlock.type` to `AttributesPanel`
+     - Auto-switches to new block if active block changes while panel is open
+   - Re-enabled `ActiveBlockTestPanel` in dev mode for verification
 
-   - Render `<BlockSideRail />` inside `EmailTemplateEditor`, ideally near `EditorRoot`/`EditorContent`
-   - Ensure it's rendered inside the editor context (can access `useActiveBlock`)
+4. **Fixed Sheet transparency issue**:
+   - Used `bg-[hsl(var(--background))]` (raw HSL value) instead of `bg-background` utility
+   - Matches pattern used in Dialog component for reliable solid backgrounds
 
-3. **Base CSS styling** (`/styles/prosemirror.css`):
+**Key Technical Solution**:
 
-   - Add `.block-side-rail` rules:
-     - `position: fixed; z-index: 51;` (above drag handle)
-     - Base size, border radius, background matching Resend aesthetic
-     - Basic opacity transition for smooth appearance
-   - No interactions yet; just ensure it **tracks correctly during scroll/selection changes**
+The critical fix for text blocks (paragraphs, headings, code blocks) was positioning the cursor **inside** the block content when falling back to TextSelection:
 
-**Success Criteria**:
+```typescript
+// Try NodeSelection first (for images, atomic nodes)
+try {
+  selection = NodeSelection.create(view.state.doc, blockStartPos);
+} catch {
+  // For text blocks, position cursor INSIDE (+1) so useActiveBlock can walk up
+  const insidePos =
+    blockStartPos < view.state.doc.content.size
+      ? blockStartPos + 1
+      : blockStartPos;
+  selection = TextSelection.create(view.state.doc, insidePos);
+}
+```
 
-- Side rail appears as a simple box next to the active block
-- Rail tracks block position correctly when scrolling, editing, and dragging
-- Positioned in the same left gutter as `.drag-handle`
-- No jitter or visual glitches during rapid selection changes
-- Works in both light and dark modes
+This ensures `useActiveBlock`'s ancestor walk from `selection.$from` can find the parent block with the UID attribute.
 
-**Files to Create/Modify**:
+**Validated Behavior**:
 
-- `/components/block-side-rail.tsx` – Side rail component skeleton
-- Update `/components/email-template-editor.tsx` to render `BlockSideRail`
-- Update `/styles/prosemirror.css` to add `.block-side-rail` base styles
+- ✅ Attributes handle works for **all** block types (paragraphs, headings, lists, quotes, code, images, embeds)
+- ✅ Clicking handle selects the block and opens the Sheet
+- ✅ Active block info (UID, type, attrs) displays correctly in both Sheet and dev panel
+- ✅ Sheet has solid background in both light and dark modes
+- ✅ Sheet auto-closes if block is deleted
+- ✅ Selection remains at block start when Sheet closes
+- ✅ Editor is non-interactive while Sheet is open (overlay intercepts clicks)
+- ✅ No performance issues or visual glitches
 
----
+**Files Created**:
 
-#### Part 2: Hover-Based Visibility Logic
+- `/components/attributes-panel.tsx` – Stub attributes panel Sheet component
 
-**Goal**: Make the side rail follow the same hover-based visibility logic as `GlobalDragHandle` (shows on hover, not just active selection).
+**Files Modified**:
 
-**Deliverables**:
+- `/lib/novel/extensions/global-drag-handle.ts` – Wired attributes handle click to selection + event emission
+- `/components/email-template-editor.tsx` – Added Sheet state, event listener, and AttributesPanelWrapper
 
-1. **Research `GlobalDragHandle` hover behavior**:
+**CSS Already in Place**:
 
-   - Inspect how `GlobalDragHandle` extension determines which block to show the handle for
-   - Understand the hover detection mechanism (likely mouse position relative to block DOM nodes)
-   - Document the exact conditions: when handle appears, when it disappears, edge cases
-
-2. **Implement hover detection for side rail**:
-
-   - Add mouse event listeners to detect hover over blocks
-   - Track which block is currently hovered (may differ from `useActiveBlock` selection)
-   - When hovering over a block, show side rail for that block
-   - When mouse leaves block area, hide side rail (or show for newly hovered block)
-
-3. **Coordinate with drag handle visibility**:
-
-   - Ensure side rail appears/disappears in sync with `.drag-handle` visibility
-   - Both should show/hide together based on hover state
-   - Handle edge cases: mouse leaving editor, scrolling while hovering, etc.
-
-4. **Mobile behavior**:
-
-   - Mirror `.drag-handle` mobile behavior (hide on screens < 600px)
-   - Ensure side rail also hides on mobile to match drag handle
-
-**Success Criteria**:
-
-- Side rail appears when hovering over a block (matching drag handle behavior)
-- Rail disappears when mouse leaves block area
-- Rail and drag handle visibility are synchronized
-- No conflicts or visual overlap between rail and handle
-- Mobile behavior matches drag handle (hidden on small screens)
-
-**Files to Create/Modify**:
-
-- Update `/components/block-side-rail.tsx` to add hover detection logic
-- Update `/styles/prosemirror.css` to add hover state styles
-
----
-
-#### Part 3: Attributes Button + Stub AttributesPanel
-
-**Goal**: Add the interactive "Attributes" button to the side rail and wire it to a stub `AttributesPanel` Sheet.
-
-**Deliverables**:
-
-1. **Add Attributes button to `BlockSideRail`**:
-
-   - Within the rail, render an icon button (e.g., Settings/Sliders icon from shadcn/icons)
-   - Handle click → `setOpen(true)` local state
-   - Add hover effects matching Resend aesthetic
-   - Ensure button is keyboard-focusable with proper ARIA labels
-
-2. **Create stub `AttributesPanel` component** (`/components/attributes-panel.tsx`):
-
-   - Uses shadcn `Sheet` component (right-side, fixed width ~400px)
-   - Props interface:
-
-     ```ts
-     type AttributesPanelProps = {
-       open: boolean;
-       onOpenChange: (open: boolean) => void;
-       blockUid: string | null;
-       blockType: string | null;
-     };
-     ```
-
-   - For now, display read-only info:
-     - Block type (badge/heading)
-     - Block UID (monospace, copyable)
-     - Raw `node.attrs` JSON dump using `findNodeByUid` helper
-   - Close button wired via `onOpenChange`
-   - Sheet header: "Block Attributes" or similar
-
-3. **Wire rail → panel**:
-
-   - `BlockSideRail` passes `activeBlock.uid` / `activeBlock.type` to `AttributesPanel`
-   - When active block changes while panel is open, update panel content to new block (auto-switch behavior)
-   - On attributes handle click, set the ProseMirror selection/caret to the **start of the hovered block** (using the hovered block position from the drag-handle plugin), so that block becomes the active block for `useActiveBlock`
-   - Opening the attributes Sheet behaves like Resend: the Sheet slides in from the right, the editor behind it is effectively non-interactive, and clicking outside or on the close button dismisses the Sheet
-   - When the Sheet is closed, the caret/selection remains at the start of the block that was clicked, so the user can immediately continue typing there or click another block to open a different attributes view
-   - Ensure panel closes gracefully if block is deleted or editor is reset
-
-**Success Criteria**:
-
-- Clicking attributes button opens right-side Sheet panel
-- Panel displays current block's UID, type, and raw attrs
-- Panel updates when active block changes (if open)
-- Panel closes via close button or clicking outside, and the caret/selection remains at the start of the block whose attributes were being edited
-- No React key warnings or state management bugs
-
-**Files to Create/Modify**:
-
-- Update `/components/block-side-rail.tsx` to add Attributes button
-- `/components/attributes-panel.tsx` – Stub attributes panel component
-- Update `/styles/prosemirror.css` to style `.block-side-rail-attributes` button
-
----
-
-#### Part 4: Interaction Polish + Edge Cases
-
-**Goal**: Polish the side rail UX, handle edge cases, and ensure it feels production-ready.
-
-**Deliverables**:
-
-1. **Visibility and interaction polish**:
-
-   - Fine-tune fade-in/fade-out transitions (match drag handle timing)
-   - Ensure rail doesn't conflict with bubble menu or selection handles
-   - Handle rapid hover changes smoothly (debounce if needed)
-   - Test edge cases: very tall blocks, very short blocks, blocks at viewport edges
-
-2. **Accessibility**:
-
-   - Ensure Attributes button is keyboard accessible (tab order, Enter/Space activation)
-   - When `AttributesPanel` opens, focus management (Sheet handles this, but verify)
-   - ARIA labels on all interactive elements
-
-3. **Responsiveness & theming**:
-
-   - Verify mobile behavior (hidden on < 600px, matching drag handle)
-   - Ensure colors/shadows match Resend-inspired aesthetic
-   - Test in both light and dark modes
-   - Ensure rail doesn't break editor layout on narrow screens
-
-4. **Performance**:
-
-   - Verify no performance degradation with rapid hover/selection changes
-   - Ensure `getBoundingClientRect` calls are optimized (already handled by `useActiveBlock`)
-   - No unnecessary re-renders
-
-5. **Dev ergonomics** (optional):
-
-   - Consider re-enabling `ActiveBlockTestPanel` temporarily for alignment debugging
-   - Document side rail positioning logic for future reference
-
-**Success Criteria**:
-
-- Side rail feels smooth and responsive (no jank)
-- All edge cases handled gracefully (viewport edges, rapid changes, etc.)
-- Keyboard navigation works correctly
-- Mobile behavior matches drag handle
-- No performance issues
-- Visually consistent with existing editor UI
-
-**Files to Create/Modify**:
-
-- Update `/components/block-side-rail.tsx` with polish and edge case handling
-- Update `/styles/prosemirror.css` with final styling and transitions
-- Update `/components/email-template-editor.tsx` if needed for integration
-
----
-
-**Phase 4 Success Criteria** (Overall):
-
-- Side rail appears next to hovered blocks (matching drag handle behavior)
-- Rail tracks blocks correctly when scrolling, editing, and dragging
-- Clicking the attributes button opens a stub `AttributesPanel` for that block
-- `GlobalDragHandle` continues to handle all drag behaviour without regressions
-- No visual overlap or weirdness between the drag handle and the side rail
-- Rail and handle visibility are synchronized
-- Mobile behavior matches drag handle (hidden on small screens)
-
-**Files to Create/Modify**:
-
-- `/components/block-side-rail.tsx` – Side rail component with hover logic
-- `/components/attributes-panel.tsx` – Stub attributes panel
-- Update `/components/email-template-editor.tsx` to render `BlockSideRail`
-- Update `/styles/prosemirror.css` to style `.block-side-rail` and its buttons
+- `.block-attributes-handle` styles already exist in `/styles/prosemirror.css` from the GlobalDragHandle plugin
+- Handle already positioned, styled, and has hover behavior matching drag handle
 
 ---
 
