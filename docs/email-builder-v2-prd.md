@@ -584,9 +584,22 @@ This ensures `useActiveBlock`'s ancestor walk from `selection.$from` can find th
 
 ---
 
-### Phase 5: Block Attributes Panel v1 (Text Blocks)
+### Phase 4 Summary ✅ COMPLETE
 
-**Goal**: Implement real attributes panel for text blocks with appearance and typography controls
+All parts of Phase 4 are complete and validated. The system now has:
+
+- **Attributes handle integration** via GlobalDragHandle click handler
+- **React-based Attributes Sheet** that opens on handle click
+- **Auto-selection** of clicked block with proper NodeSelection/TextSelection handling
+- **Solid background Sheet** that works in light and dark modes
+
+**Next Phase**: Phase 5 - Block Attributes Panel v1 (Interactive Styling)
+
+---
+
+### Phase 5: Block Attributes Panel v1 (Interactive Styling) ✅ COMPLETE
+
+**Goal**: Implement interactive attributes panel with Resend-inspired UX for styling all block types
 
 **Deliverables**:
 
@@ -705,16 +718,122 @@ This ensures `useActiveBlock`'s ancestor walk from `selection.$from` can find th
 - Closing panel preserves changes
 - No bugs with multiple rapid style changes
 
-**Files to Create/Modify**:
+**What Was Built**:
 
-- `/types/block-styles.ts` – Styles type definitions
-- `/lib/extensions/email-paragraph.ts` – Extended paragraph node
-- `/lib/extensions/email-heading.ts` – Extended heading node
-- `/components/attributes-panel.tsx` – Full panel implementation
-- `/components/attributes-panel/appearance-section.tsx` – Appearance controls
-- `/components/attributes-panel/typography-section.tsx` – Typography controls
-- `/components/attributes-panel/layout-section.tsx` – Layout controls
-- Update `/components/extensions.ts` to use extended nodes
+1. **BlockStyles Type System** (`/types/block-styles.ts`):
+
+   - Complete `BlockStyles` interface with all email-safe CSS properties
+   - Type subsets: `TextBlockStyles`, `ImageBlockStyles`, `CodeBlockStyles`, `ListBlockStyles`
+   - Removed "justify" alignment (Resend only supports left/center/right)
+
+2. **Style Utility Functions** (added to `/lib/email-blocks.ts`):
+
+   - `convertBlockStylesToInlineCSS(styles, options?)` - Converts BlockStyles to inline CSS string
+   - Special image alignment handling via `{ isImage: true }` flag (uses `display: block` + margin auto)
+   - `mergeWithGlobalStyles()` - Merges block styles with global defaults
+   - `getDefaultStylesForBlockType()` - Returns appropriate defaults per block type
+
+3. **Extended TipTap Nodes with `styles` Attribute**:
+
+   - `/lib/extensions/email-paragraph.ts` - Paragraph with styles
+   - `/lib/extensions/email-heading.ts` - Heading with styles
+   - `/lib/extensions/email-blockquote.ts` - Blockquote with styles
+   - `/lib/extensions/email-code-block.ts` - Code block with styles
+   - `/lib/extensions/email-image.ts` - Image with styles + width/height for resize persistence
+   - `/lib/extensions/email-lists.ts` - BulletList, OrderedList with styles
+   - All use `parseHTML` to read `data-styles` attribute and `renderHTML` to write inline CSS
+
+4. **Updated Email Extensions Configuration** (`/components/email-extensions.ts`):
+
+   - Disabled StarterKit's paragraph, heading, blockquote, codeBlock, bulletList, orderedList, listItem
+   - Added all email-specific extended nodes with configured HTMLAttributes
+   - Maintains all other extensions (UniqueID, placeholder, links, images, etc.)
+
+5. **Resend-Inspired Attributes Panel UI**:
+
+   - `/components/attributes-panel/color-picker-input.tsx` - Native `<input type="color">` + hex text input
+   - `/components/attributes-panel/padding-control.tsx` - Unified input with lock/unlock toggle
+   - `/components/attributes-panel/slider-number-input.tsx` - Slider + number input combo
+   - `/components/attributes-panel/alignment-control.tsx` - Select dropdown (Left/Center/Right)
+   - `/components/attributes-panel/style-dropdown-menu.tsx` - + button dropdown menu to add style overrides
+   - `/components/attributes-panel/style-control.tsx` - Individual style control with - button to remove
+   - `/components/attributes-panel/types.ts` - Shared TypeScript types
+
+6. **Rebuilt AttributesPanel Component** (`/components/attributes-panel.tsx`):
+
+   - **Structure**: Type → UID → Alignment → Styles → Reset
+   - **Alignment**: Always visible dropdown for all block types
+   - **Styles Section**:
+     - - button opens dropdown menu (Appearance, Typography, Layout categories)
+     - Click to add style override
+     - Each active style shows with - button to remove
+     - Shows "No style overrides" when empty
+   - **Smart Defaults**: When adding a style, sets sensible default value (e.g., white background, not black)
+   - **Real-time WYSIWYG**: Changes apply immediately via `updateNodeAttrsByUid()`
+   - **Reset to Defaults**: Clears all `styles: {}` overrides, reverts to global defaults
+
+7. **Fixed Image Resize Persistence** (`/lib/novel/extensions/image-resizer.tsx`):
+   - Changed from `setImage()` to `updateAttributes()` to preserve `styles` during resize
+   - Images no longer snap back to original size after resize
+   - Images no longer lose alignment when resized
+
+**Key Technical Solutions**:
+
+- **Image alignment**: Uses `display: block` + `margin-left/right: auto` pattern instead of `text-align` (email-safe)
+- **Style persistence**: All styles stored in `node.attrs.styles`, serialized via `data-styles` attribute
+- **Real-time updates**: No "Apply" button needed - writes to editor on every change
+- **Active style tracking**: `activeStyleKeys` Set manages which style controls are visible
+
+**Validated Behavior**:
+
+- ✅ All block types support alignment (text, headings, images, code, lists, blockquotes)
+- ✅ Text blocks show typography controls (text color, font size, weight, line height, decoration)
+- ✅ Images support border radius, border width/style/color, padding, alignment, width/height
+- ✅ Code blocks support background, text color, font size, padding, border
+- ✅ Lists support text color, font size, line height, padding
+- ✅ Border controls auto-enable when width > 0 (shows style and color dropdowns)
+- ✅ Padding lock/unlock toggle works correctly
+- ✅ Color pickers use native input + hex text input (better UX than preset swatches)
+- ✅ Slider + number input combos provide visual + precise control
+- ✅ Adding style sets sensible default value
+- ✅ Removing style deletes from node attrs
+- ✅ Reset to Defaults clears all style overrides
+- ✅ Image resize preserves alignment and other styles
+- ✅ Styles persist across page reload (via EmailTemplate → localStorage)
+- ✅ Real-time WYSIWYG - changes apply immediately in editor
+- ✅ Undo/redo works for all style changes
+
+**Files Created (16)**:
+
+- `/types/block-styles.ts`
+- `/lib/extensions/email-paragraph.ts`
+- `/lib/extensions/email-heading.ts`
+- `/lib/extensions/email-blockquote.ts`
+- `/lib/extensions/email-code-block.ts`
+- `/lib/extensions/email-image.ts`
+- `/lib/extensions/email-lists.ts`
+- `/components/attributes-panel/color-picker-input.tsx`
+- `/components/attributes-panel/padding-control.tsx`
+- `/components/attributes-panel/slider-number-input.tsx`
+- `/components/attributes-panel/alignment-control.tsx`
+- `/components/attributes-panel/style-dropdown-menu.tsx`
+- `/components/attributes-panel/style-control.tsx`
+- `/components/attributes-panel/types.ts`
+
+**Files Modified (4)**:
+
+- `/lib/email-blocks.ts` - Added style conversion and merge utilities
+- `/components/email-extensions.ts` - Replaced StarterKit nodes with extended versions
+- `/components/attributes-panel.tsx` - Transformed to Resend-inspired interactive panel
+- `/lib/novel/extensions/image-resizer.tsx` - Fixed to preserve styles during resize
+
+**Files Deprecated (4)** - No longer used, can be deleted:
+
+- `/components/attributes-panel/appearance-section.tsx`
+- `/components/attributes-panel/typography-section.tsx`
+- `/components/attributes-panel/layout-section.tsx`
+- `/components/attributes-panel/image-section.tsx`
+- `/components/attributes-panel/color-picker.tsx`
 
 ---
 
@@ -2041,15 +2160,21 @@ All three parts of Phase 3 are complete and validated. The system now has:
 - **Programmatic access** to blocks via JSON and editor helper utilities
 - **Real-time active block tracking** with full support for text, lists, and media
 
-This foundation enables:
+---
 
-- Phase 4: Side Rail UI with block-specific controls
-- Phase 5: Attributes panels for block styling
-- Future: Per-block metadata, styling inheritance, container-level controls
+### Phase 4 Summary ✅ COMPLETE
 
-**Next Phase**: Phase 4 - Side Rail UI (Attributes Button + GlobalDragHandle)
+Phase 4 successfully wired the attributes handle to open a React-based Sheet panel with proper selection handling and event bridging between ProseMirror plugin and React components.
 
 ---
 
-_Last updated: [Auto-generated timestamp]_
-_Version: 2.0_
+### Phase 5 Summary ✅ COMPLETE
+
+Phase 5 transformed the attributes panel into a fully interactive styling system with Resend-inspired UX. Users can now customize any block with email-safe CSS properties via an intuitive + dropdown interface. All styles persist in `node.attrs.styles` and apply in real-time with true WYSIWYG feedback.
+
+**Next Phase**: Phase 6 - Global Styles + Template Header UI
+
+---
+
+_Last updated: November 18, 2024_
+_Version: 2.1_
