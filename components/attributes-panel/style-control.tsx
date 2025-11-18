@@ -117,25 +117,25 @@ export function StyleControl({
             <SelectContent>
               <SelectItem
                 value="solid"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Solid
               </SelectItem>
               <SelectItem
                 value="dashed"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Dashed
               </SelectItem>
               <SelectItem
                 value="dotted"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Dotted
               </SelectItem>
               <SelectItem
                 value="none"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 None
               </SelectItem>
@@ -155,31 +155,31 @@ export function StyleControl({
             <SelectContent>
               <SelectItem
                 value="400"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Regular
               </SelectItem>
               <SelectItem
                 value="500"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Medium
               </SelectItem>
               <SelectItem
                 value="600"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Semibold
               </SelectItem>
               <SelectItem
                 value="700"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Bold
               </SelectItem>
               <SelectItem
                 value="800"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Extra Bold
               </SelectItem>
@@ -201,19 +201,19 @@ export function StyleControl({
             <SelectContent>
               <SelectItem
                 value="none"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 None
               </SelectItem>
               <SelectItem
                 value="underline"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Underline
               </SelectItem>
               <SelectItem
                 value="line-through"
-                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 Strikethrough
               </SelectItem>
