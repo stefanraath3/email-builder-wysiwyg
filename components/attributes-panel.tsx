@@ -92,9 +92,28 @@ export function AttributesPanel({
     updateNodeAttrsByUid(editor, blockUid, { styles: newStyles });
   };
 
-  // Add a style control
+  // Add a style control with a sensible default value
   const handleAddStyle = (styleKey: StyleOption) => {
     setActiveStyleKeys((prev) => new Set(prev).add(styleKey));
+
+    // Set default values for newly added styles
+    const defaultValues: Partial<Record<StyleOption, any>> = {
+      backgroundColor: "#ffffff",
+      borderRadius: 0,
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: "#000000",
+      textColor: "#000000",
+      fontSize: 14,
+      fontWeight: 400,
+      lineHeight: 1.5,
+      textDecoration: "none",
+      padding: { top: 0, right: 0, bottom: 0, left: 0 },
+    };
+
+    if (defaultValues[styleKey] !== undefined) {
+      updateStyle(styleKey as keyof BlockStyles, defaultValues[styleKey]);
+    }
   };
 
   // Remove a style control
