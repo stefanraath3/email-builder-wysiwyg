@@ -1,5 +1,6 @@
 import { EmailTemplateProvider } from "@/lib/email-template-context";
 import { EmailTemplateEditor } from "@/components/email-template-editor";
+import Menu from "@/components/ui/menu";
 
 export default function EmailEditorPage() {
   return (
@@ -44,6 +45,7 @@ export default function EmailEditorPage() {
               >
                 Publish
               </button>
+              <Menu />
             </div>
           </div>
         </div>

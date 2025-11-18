@@ -25,9 +25,24 @@ export function AlignmentControl({ value, onChange }: AlignmentControlProps) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="left">Left</SelectItem>
-        <SelectItem value="center">Center</SelectItem>
-        <SelectItem value="right">Right</SelectItem>
+        <SelectItem
+          value="left"
+          className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
+        >
+          Left
+        </SelectItem>
+        <SelectItem
+          value="center"
+          className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
+        >
+          Center
+        </SelectItem>
+        <SelectItem
+          value="right"
+          className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
+        >
+          Right
+        </SelectItem>
       </SelectContent>
     </Select>
   );

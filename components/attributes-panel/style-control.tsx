@@ -115,10 +115,30 @@ export function StyleControl({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="solid">Solid</SelectItem>
-              <SelectItem value="dashed">Dashed</SelectItem>
-              <SelectItem value="dotted">Dotted</SelectItem>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem
+                value="solid"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Solid
+              </SelectItem>
+              <SelectItem
+                value="dashed"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Dashed
+              </SelectItem>
+              <SelectItem
+                value="dotted"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Dotted
+              </SelectItem>
+              <SelectItem
+                value="none"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                None
+              </SelectItem>
             </SelectContent>
           </Select>
         );
@@ -133,11 +153,36 @@ export function StyleControl({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="400">Regular</SelectItem>
-              <SelectItem value="500">Medium</SelectItem>
-              <SelectItem value="600">Semibold</SelectItem>
-              <SelectItem value="700">Bold</SelectItem>
-              <SelectItem value="800">Extra Bold</SelectItem>
+              <SelectItem
+                value="400"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Regular
+              </SelectItem>
+              <SelectItem
+                value="500"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Medium
+              </SelectItem>
+              <SelectItem
+                value="600"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Semibold
+              </SelectItem>
+              <SelectItem
+                value="700"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Bold
+              </SelectItem>
+              <SelectItem
+                value="800"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Extra Bold
+              </SelectItem>
             </SelectContent>
           </Select>
         );
@@ -154,9 +199,24 @@ export function StyleControl({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="underline">Underline</SelectItem>
-              <SelectItem value="line-through">Strikethrough</SelectItem>
+              <SelectItem
+                value="none"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                None
+              </SelectItem>
+              <SelectItem
+                value="underline"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Underline
+              </SelectItem>
+              <SelectItem
+                value="line-through"
+                className="cursor-pointer hover:bg-[var(--novel-stone-200)] focus:bg-[var(--novel-stone-200)]"
+              >
+                Strikethrough
+              </SelectItem>
             </SelectContent>
           </Select>
         );

@@ -73,6 +73,7 @@ export function StyleDropdownMenu({
             key={option.value}
             onClick={() => onAddStyle(option.value)}
             disabled={activeStyles.has(option.value)}
+            className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
           >
             {option.label}
           </DropdownMenuItem>
@@ -87,6 +88,7 @@ export function StyleDropdownMenu({
                 key={option.value}
                 onClick={() => onAddStyle(option.value)}
                 disabled={activeStyles.has(option.value)}
+                className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
               >
                 {option.label}
               </DropdownMenuItem>
@@ -101,6 +103,7 @@ export function StyleDropdownMenu({
             key={option.value}
             onClick={() => onAddStyle(option.value)}
             disabled={activeStyles.has(option.value)}
+            className="cursor-pointer hover:bg-(--novel-stone-200) focus:bg-(--novel-stone-200)"
           >
             {option.label}
           </DropdownMenuItem>
