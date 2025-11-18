@@ -104,7 +104,16 @@ importers:
       '@tiptap/core':
         specifier: ^2.11.2
         version: 2.27.1(@tiptap/pm@2.27.1)
+      '@tiptap/extension-blockquote':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
+      '@tiptap/extension-bullet-list':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
       '@tiptap/extension-character-count':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))(@tiptap/pm@2.27.1)
+      '@tiptap/extension-code-block':
         specifier: ^2.11.2
         version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))(@tiptap/pm@2.27.1)
       '@tiptap/extension-code-block-lowlight':
@@ -113,6 +122,9 @@ importers:
       '@tiptap/extension-color':
         specifier: ^2.11.2
         version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))(@tiptap/extension-text-style@2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1)))
+      '@tiptap/extension-heading':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
       '@tiptap/extension-highlight':
         specifier: ^2.11.2
         version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
@@ -125,6 +137,15 @@ importers:
       '@tiptap/extension-link':
         specifier: ^2.11.2
         version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))(@tiptap/pm@2.27.1)
+      '@tiptap/extension-list-item':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
+      '@tiptap/extension-ordered-list':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
+      '@tiptap/extension-paragraph':
+        specifier: ^2.11.2
+        version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))
       '@tiptap/extension-placeholder':
         specifier: ^2.11.2
         version: 2.27.1(@tiptap/core@2.27.1(@tiptap/pm@2.27.1))(@tiptap/pm@2.27.1)

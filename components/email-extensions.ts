@@ -14,11 +14,9 @@ import {
   TaskItem,
   TaskList,
   TextStyle,
-  TiptapImage,
   TiptapLink,
   TiptapUnderline,
   Twitter,
-  UpdatedImage,
   UploadImagesPlugin,
   Youtube,
 } from "@/lib/novel";
@@ -26,6 +24,16 @@ import {
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
 import { UniqueID } from "@tiptap/extension-unique-id";
+import { EmailParagraph } from "@/lib/extensions/email-paragraph";
+import { EmailHeading } from "@/lib/extensions/email-heading";
+import { EmailBlockquote } from "@/lib/extensions/email-blockquote";
+import { EmailCodeBlock } from "@/lib/extensions/email-code-block";
+import { EmailImage } from "@/lib/extensions/email-image";
+import {
+  EmailBulletList,
+  EmailOrderedList,
+  EmailListItem,
+} from "@/lib/extensions/email-lists";
 
 // Configure placeholder for email editor
 const placeholder = Placeholder.configure({
@@ -41,26 +49,7 @@ const tiptapLink = TiptapLink.configure({
   },
 });
 
-const tiptapImage = TiptapImage.extend({
-  addProseMirrorPlugins() {
-    return [
-      UploadImagesPlugin({
-        imageClass: cx("opacity-40 rounded-lg border border-stone-200"),
-      }),
-    ];
-  },
-}).configure({
-  allowBase64: true,
-  HTMLAttributes: {
-    class: cx("rounded-lg border border-muted"),
-  },
-});
-
-const updatedImage = UpdatedImage.configure({
-  HTMLAttributes: {
-    class: cx("rounded-lg border border-muted"),
-  },
-});
+// EmailImage already includes UploadImagesPlugin and configuration
 
 const taskList = TaskList.configure({
   HTMLAttributes: {
@@ -82,33 +71,13 @@ const horizontalRule = HorizontalRule.configure({
 });
 
 const starterKit = StarterKit.configure({
-  bulletList: {
-    HTMLAttributes: {
-      class: cx("list-disc list-outside leading-3 -mt-2"),
-    },
-  },
-  orderedList: {
-    HTMLAttributes: {
-      class: cx("list-decimal list-outside leading-3 -mt-2"),
-    },
-  },
-  listItem: {
-    HTMLAttributes: {
-      class: cx("leading-normal -mb-2"),
-    },
-  },
-  blockquote: {
-    HTMLAttributes: {
-      class: cx("border-l-4 border-primary"),
-    },
-  },
-  codeBlock: {
-    HTMLAttributes: {
-      class: cx(
-        "rounded-md bg-muted text-muted-foreground border p-5 font-mono font-medium"
-      ),
-    },
-  },
+  paragraph: false, // We'll use EmailParagraph
+  heading: false, // We'll use EmailHeading
+  blockquote: false, // We'll use EmailBlockquote
+  codeBlock: false, // We'll use EmailCodeBlock
+  bulletList: false, // We'll use EmailBulletList
+  orderedList: false, // We'll use EmailOrderedList
+  listItem: false, // We'll use EmailListItem
   code: {
     HTMLAttributes: {
       class: cx("rounded-md bg-muted  px-1.5 py-1 font-mono font-medium"),
@@ -121,6 +90,39 @@ const starterKit = StarterKit.configure({
     width: 4,
   },
   gapcursor: false,
+});
+
+// Configure email-specific nodes with styling
+const emailBulletList = EmailBulletList.configure({
+  HTMLAttributes: {
+    class: cx("list-disc list-outside leading-3 -mt-2"),
+  },
+});
+
+const emailOrderedList = EmailOrderedList.configure({
+  HTMLAttributes: {
+    class: cx("list-decimal list-outside leading-3 -mt-2"),
+  },
+});
+
+const emailListItem = EmailListItem.configure({
+  HTMLAttributes: {
+    class: cx("leading-normal -mb-2"),
+  },
+});
+
+const emailBlockquote = EmailBlockquote.configure({
+  HTMLAttributes: {
+    class: cx("border-l-4 border-primary"),
+  },
+});
+
+const emailCodeBlock = EmailCodeBlock.configure({
+  HTMLAttributes: {
+    class: cx(
+      "rounded-md bg-muted text-muted-foreground border p-5 font-mono font-medium"
+    ),
+  },
 });
 
 const codeBlockLowlight = CodeBlockLowlight.configure({
@@ -190,11 +192,17 @@ const uniqueId = UniqueID.configure({
  */
 export const emailExtensions = [
   starterKit,
+  EmailParagraph,
+  EmailHeading,
+  emailBlockquote,
+  emailCodeBlock,
+  emailBulletList,
+  emailOrderedList,
+  emailListItem,
+  EmailImage,
   uniqueId,
   placeholder,
   tiptapLink,
-  tiptapImage,
-  updatedImage,
   taskList,
   taskItem,
   horizontalRule,

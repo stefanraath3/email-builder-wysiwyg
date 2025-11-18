@@ -1,6 +1,8 @@
 import type { Editor } from "@tiptap/core";
 import type { JSONContent } from "@tiptap/react";
 import { Node as PMNode } from "@tiptap/pm/model";
+import type { BlockStyles } from "@/types/block-styles";
+import type { GlobalStyles } from "@/types/email-template";
 
 /**
  * Shared constant for the UID attribute name used by UniqueID extension
@@ -139,4 +141,152 @@ export function updateNodeAttrsByUid(
   editor.view.dispatch(tr);
 
   return true;
+}
+
+/**
+ * Convert BlockStyles object to inline CSS string
+ * Used in renderHTML to apply styles in editor view
+ */
+export function convertBlockStylesToInlineCSS(styles: BlockStyles): string {
+  const cssProps: string[] = [];
+
+  if (styles.backgroundColor) {
+    cssProps.push(`background-color: ${styles.backgroundColor}`);
+  }
+  if (styles.textColor) {
+    cssProps.push(`color: ${styles.textColor}`);
+  }
+  if (styles.fontSize) {
+    cssProps.push(`font-size: ${styles.fontSize}px`);
+  }
+  if (styles.fontWeight) {
+    cssProps.push(`font-weight: ${styles.fontWeight}`);
+  }
+  if (styles.lineHeight) {
+    cssProps.push(`line-height: ${styles.lineHeight}`);
+  }
+  if (styles.textAlign) {
+    cssProps.push(`text-align: ${styles.textAlign}`);
+  }
+  if (styles.borderRadius !== undefined) {
+    cssProps.push(`border-radius: ${styles.borderRadius}px`);
+  }
+  if (styles.borderWidth !== undefined) {
+    cssProps.push(`border-width: ${styles.borderWidth}px`);
+  }
+  if (styles.borderStyle) {
+    cssProps.push(`border-style: ${styles.borderStyle}`);
+  }
+  if (styles.borderColor) {
+    cssProps.push(`border-color: ${styles.borderColor}`);
+  }
+  if (styles.padding) {
+    const { top, right, bottom, left } = styles.padding;
+    cssProps.push(`padding: ${top}px ${right}px ${bottom}px ${left}px`);
+  }
+  if (styles.width !== undefined) {
+    cssProps.push(`width: ${styles.width}px`);
+  }
+  if (styles.height !== undefined) {
+    if (styles.height === "auto") {
+      cssProps.push(`height: auto`);
+    } else {
+      cssProps.push(`height: ${styles.height}px`);
+    }
+  }
+  if (styles.display) {
+    cssProps.push(`display: ${styles.display}`);
+  }
+  if (styles.textDecoration) {
+    cssProps.push(`text-decoration: ${styles.textDecoration}`);
+  }
+  if (styles.fontFamily) {
+    cssProps.push(`font-family: ${styles.fontFamily}`);
+  }
+
+  return cssProps.join("; ");
+}
+
+/**
+ * Merge block styles with global defaults
+ * Returns computed styles with global fallbacks applied
+ */
+export function mergeWithGlobalStyles(
+  blockStyles: BlockStyles,
+  globalStyles: GlobalStyles,
+  blockType: string
+): BlockStyles {
+  const merged: BlockStyles = { ...blockStyles };
+
+  // Apply global defaults only if block doesn't have custom value
+  if (blockType === "paragraph" || blockType === "heading") {
+    if (!merged.textColor && globalStyles.typography.color) {
+      merged.textColor = globalStyles.typography.color;
+    }
+    if (!merged.fontSize && globalStyles.typography.fontSize) {
+      merged.fontSize = globalStyles.typography.fontSize;
+    }
+    if (!merged.lineHeight && globalStyles.typography.lineHeight) {
+      merged.lineHeight = globalStyles.typography.lineHeight;
+    }
+    if (!merged.fontFamily && globalStyles.typography.fontFamily) {
+      merged.fontFamily = globalStyles.typography.fontFamily;
+    }
+  }
+
+  if (blockType === "image") {
+    if (
+      merged.borderRadius === undefined &&
+      globalStyles.image.borderRadius !== undefined
+    ) {
+      merged.borderRadius = globalStyles.image.borderRadius;
+    }
+  }
+
+  if (blockType === "codeBlock") {
+    if (!merged.backgroundColor && globalStyles.codeBlock.backgroundColor) {
+      merged.backgroundColor = globalStyles.codeBlock.backgroundColor;
+    }
+    if (
+      merged.borderRadius === undefined &&
+      globalStyles.codeBlock.borderRadius !== undefined
+    ) {
+      merged.borderRadius = globalStyles.codeBlock.borderRadius;
+    }
+    if (merged.padding === undefined && globalStyles.codeBlock.padding) {
+      merged.padding = globalStyles.codeBlock.padding;
+    }
+  }
+
+  return merged;
+}
+
+/**
+ * Get default styles for a block type from global styles
+ * Returns appropriate defaults based on block type
+ */
+export function getDefaultStylesForBlockType(
+  blockType: string,
+  globalStyles: GlobalStyles
+): Partial<BlockStyles> {
+  const defaults: Partial<BlockStyles> = {};
+
+  if (blockType === "paragraph" || blockType === "heading") {
+    defaults.textColor = globalStyles.typography.color;
+    defaults.fontSize = globalStyles.typography.fontSize;
+    defaults.lineHeight = globalStyles.typography.lineHeight;
+    defaults.fontFamily = globalStyles.typography.fontFamily;
+  }
+
+  if (blockType === "image") {
+    defaults.borderRadius = globalStyles.image.borderRadius;
+  }
+
+  if (blockType === "codeBlock") {
+    defaults.backgroundColor = globalStyles.codeBlock.backgroundColor;
+    defaults.borderRadius = globalStyles.codeBlock.borderRadius;
+    defaults.padding = globalStyles.codeBlock.padding;
+  }
+
+  return defaults;
 }
