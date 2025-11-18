@@ -411,6 +411,13 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **Goal**: Give each block a stable identity and expose the currently active block to React, without reinventing selection/drag behaviour that already exists via `GlobalDragHandle`.
 
+#### Implementation Parts
+
+- **Part 1**: Install and configure `UniqueID` extension, wire it into `emailExtensions`, and verify `uid` attributes appear and persist correctly in the JSON debug panel.
+- **Part 2**: Add block ID helper utilities (e.g. `findNodeByUid`, `updateNodeAttrsByUid`) to make it easy to query and mutate nodes by `uid`.
+- **Part 3**: Implement a lightweight `useActiveBlock` hook that exposes `{ uid, type, pos, domRect }` for the currently focused block.
+- **Part 4**: Add visual feedback (CSS/decoration) for the active block, driven by `uid`/selection, without changing drag behaviour.
+
 **Deliverables**:
 
 1. Integrate TipTap `UniqueID` extension for block nodes:

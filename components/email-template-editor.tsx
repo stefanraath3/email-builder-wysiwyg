@@ -28,6 +28,12 @@ import { TextButtons } from "./selectors/text-buttons";
 import { emailSlashCommand, emailSuggestionItems } from "./email-slash-command";
 import TemplateHeader from "./template-header";
 import EmailTemplateDebugPanel from "./email-template-debug-panel";
+import { useEditor } from "@/lib/novel";
+import {
+  findNodeByUid,
+  findNodeByUidJson,
+  updateNodeAttrsByUid,
+} from "@/lib/email-blocks";
 
 const extensions = [...emailExtensions, emailSlashCommand];
 
@@ -45,6 +51,7 @@ export function EmailTemplateEditor() {
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
   const [openAI, setOpenAI] = useState(false);
+  const { editor } = useEditor();
 
   // Initialize content from template (only once)
   useEffect(() => {
@@ -53,6 +60,26 @@ export function EmailTemplateEditor() {
       setIsInitialized(true);
     }
   }, [template.content, isInitialized]);
+
+  // Dev helper: expose editor and helper functions to window for testing
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      process.env.NODE_ENV === "development"
+    ) {
+      (window as any).__emailEditor = {
+        editor,
+        template,
+        helpers: {
+          findNodeByUid: (uid: string) => editor && findNodeByUid(editor, uid),
+          findNodeByUidJson: (uid: string) =>
+            template.content && findNodeByUidJson(template.content, uid),
+          updateNodeAttrsByUid: (uid: string, attrs: Record<string, unknown>) =>
+            editor && updateNodeAttrsByUid(editor, uid, attrs),
+        },
+      };
+    }
+  }, [editor, template]);
 
   // Handle editor updates
   const handleUpdate = (editor: EditorInstance) => {
