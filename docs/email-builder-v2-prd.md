@@ -634,6 +634,9 @@ Reuses novel's bubble menu with email-appropriate controls:
 
    - `BlockSideRail` passes `activeBlock.uid` / `activeBlock.type` to `AttributesPanel`
    - When active block changes while panel is open, update panel content to new block (auto-switch behavior)
+   - On attributes handle click, set the ProseMirror selection/caret to the **start of the hovered block** (using the hovered block position from the drag-handle plugin), so that block becomes the active block for `useActiveBlock`
+   - Opening the attributes Sheet behaves like Resend: the Sheet slides in from the right, the editor behind it is effectively non-interactive, and clicking outside or on the close button dismisses the Sheet
+   - When the Sheet is closed, the caret/selection remains at the start of the block that was clicked, so the user can immediately continue typing there or click another block to open a different attributes view
    - Ensure panel closes gracefully if block is deleted or editor is reset
 
 **Success Criteria**:
@@ -641,7 +644,7 @@ Reuses novel's bubble menu with email-appropriate controls:
 - Clicking attributes button opens right-side Sheet panel
 - Panel displays current block's UID, type, and raw attrs
 - Panel updates when active block changes (if open)
-- Panel closes via close button or clicking outside
+- Panel closes via close button or clicking outside, and the caret/selection remains at the start of the block whose attributes were being edited
 - No React key warnings or state management bugs
 
 **Files to Create/Modify**:

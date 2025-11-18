@@ -34,7 +34,9 @@ import {
   findNodeByUidJson,
   updateNodeAttrsByUid,
 } from "@/lib/email-blocks";
-// import { ActiveBlockTestPanel } from "./active-block-test-panel";
+import { useActiveBlock } from "@/hooks/use-active-block";
+import { AttributesPanel } from "./attributes-panel";
+import { ActiveBlockTestPanel } from "./active-block-test-panel";
 
 const extensions = [...emailExtensions, emailSlashCommand];
 
@@ -52,6 +54,7 @@ export function EmailTemplateEditor() {
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
   const [openAI, setOpenAI] = useState(false);
+  const [isAttributesOpen, setIsAttributesOpen] = useState(false);
   const { editor } = useEditor();
 
   // Initialize content from template (only once)
@@ -61,6 +64,24 @@ export function EmailTemplateEditor() {
       setIsInitialized(true);
     }
   }, [template.content, isInitialized]);
+
+  // Listen for attributes handle click event from GlobalDragHandle plugin
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleOpenAttributes = () => {
+      setIsAttributesOpen(true);
+    };
+
+    window.addEventListener("emailEditor:openAttributes", handleOpenAttributes);
+
+    return () => {
+      window.removeEventListener(
+        "emailEditor:openAttributes",
+        handleOpenAttributes
+      );
+    };
+  }, []);
 
   // Dev helper: expose editor and helper functions to window for testing
   useEffect(() => {
@@ -184,8 +205,15 @@ export function EmailTemplateEditor() {
               <ColorSelector open={openColor} onOpenChange={setOpenColor} />
             </GenerativeMenuSwitch>
 
-            {/* Active Block Test Panel (Dev Only) */}
-            {/* <ActiveBlockTestPanel /> */}
+            {/* Active Block Test Panel (Dev Only) - temporarily enabled for verification */}
+            {process.env.NODE_ENV === "development" && <ActiveBlockTestPanel />}
+
+            {/* Attributes Panel - uses activeBlock from useActiveBlock hook */}
+            {/* Sheet uses portals so it can be rendered here but will portal to body */}
+            <AttributesPanelWrapper
+              isOpen={isAttributesOpen}
+              onOpenChange={setIsAttributesOpen}
+            />
           </EditorContent>
         </EditorRoot>
       </div>
@@ -193,5 +221,28 @@ export function EmailTemplateEditor() {
       {/* JSON Debug Panel */}
       <EmailTemplateDebugPanel />
     </div>
+  );
+}
+
+/**
+ * Wrapper component to use useActiveBlock inside EditorContent context
+ * This ensures the hook has access to TipTap's editor context
+ */
+function AttributesPanelWrapper({
+  isOpen,
+  onOpenChange,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const activeBlock = useActiveBlock();
+
+  return (
+    <AttributesPanel
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      blockUid={activeBlock?.uid ?? null}
+      blockType={activeBlock?.type ?? null}
+    />
   );
 }

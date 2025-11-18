@@ -292,12 +292,47 @@ function DragHandlePlugin(options: DragHandlePluginOptions) {
         </svg>
       `;
 
-      // For Part 1, just log to console - will wire to attributes panel in later parts
+      // Handle attributes button click: set selection to block start and emit event to open Sheet
       attributesHandleElement.addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        // Will use lastHoveredPos in Part 2/3 to set selection and open panel
-        console.log("Attributes handle clicked", { lastHoveredPos });
+
+        // Guard: ensure we have a valid view and hovered position
+        if (!view || lastHoveredPos == null || lastHoveredPos < 0) {
+          return;
+        }
+
+        // Compute the block start position using existing helper
+        const blockStartPos = calcNodePos(lastHoveredPos, view);
+
+        // Try to create a NodeSelection first (works for atomic nodes and block nodes)
+        let selection;
+        try {
+          selection = NodeSelection.create(view.state.doc, blockStartPos);
+        } catch {
+          // If NodeSelection fails, fall back to TextSelection
+          // Place cursor just inside the block so useActiveBlock can find it
+          const $pos = view.state.doc.resolve(blockStartPos);
+          // Move one position forward to be inside the block content
+          const insidePos =
+            blockStartPos < view.state.doc.content.size
+              ? blockStartPos + 1
+              : blockStartPos;
+          selection = TextSelection.create(view.state.doc, insidePos);
+        }
+
+        // Dispatch transaction to set selection and scroll into view
+        view.dispatch(view.state.tr.setSelection(selection).scrollIntoView());
+
+        // Emit custom event to request opening the React Attributes Sheet
+        // React side will use useActiveBlock to get full block details
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("emailEditor:openAttributes", {
+              detail: { pos: blockStartPos },
+            })
+          );
+        }
       });
 
       // Keep handles visible when hovering over them
