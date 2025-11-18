@@ -407,109 +407,90 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 ---
 
-### Phase 3: Block Identity (UniqueID) + Active Block Hook
+### Phase 3: Block Identity (UniqueID) + Active Block Hook ✅ COMPLETE
 
 **Goal**: Give each block a stable identity and expose the currently active block to React, without reinventing selection/drag behaviour that already exists via `GlobalDragHandle`.
 
-#### Implementation Parts
+#### Implementation Parts (All Complete)
 
-- **Part 1**: Install and configure `UniqueID` extension, wire it into `emailExtensions`, and verify `uid` attributes appear and persist correctly in the JSON debug panel.
-- **Part 2**: Add block ID helper utilities (e.g. `findNodeByUid`, `updateNodeAttrsByUid`) to make it easy to query and mutate nodes by `uid`.
-- **Part 3**: Implement a lightweight `useActiveBlock` hook that exposes `{ uid, type, pos, domRect }` for the currently focused block.
-- **Part 4**: Add visual feedback (CSS/decoration) for the active block, driven by `uid`/selection, without changing drag behaviour.
+- **Part 1 ✅**: Install and configure `UniqueID` extension with pure UUID generation
+- **Part 2 ✅**: Create block ID helper utilities for both JSON and live editor operations
+- **Part 3 ✅**: Implement `useActiveBlock` hook with NodeSelection support for images
+- **Part 4**: Add visual feedback for active block (DEFERRED to later phase)
 
-**Deliverables**:
+**What Was Built**:
 
-1. Integrate TipTap `UniqueID` extension for block nodes:
+1. **UniqueID Extension Integration** (`@tiptap/extension-unique-id@2.27.1`):
 
-   - Install `@tiptap/extension-unique-id`
-   - Configure with:
+   - Configured with:
      - `attributeName: "uid"`
-     - `types: ["paragraph", "heading", "blockquote", "codeBlock", "bulletList", "orderedList", "image", "youtube", "twitter"]`
-     - `generateID: ({ node }) => \`\${node.type.name}-\${crypto.randomUUID()}\``
-   - Ensure all new documents and loaded content have `attrs.uid` on these node types
-   - (Optional) add small server utility using `generateUniqueIds` for backfills
+     - `types: ["paragraph", "heading", "blockquote", "codeBlock", "bulletList", "orderedList", "taskList", "taskItem", "image", "youtube", "twitter"]`
+     - `generateID: () => crypto.randomUUID()` (pure UUID, not prefixed)
+   - Wired into `/components/email-extensions.ts`
+   - All blocks automatically get stable UIDs on creation
+   - UIDs persist across drag, paste, undo/redo
 
-2. Add helper utilities for working with block IDs:
+2. **Block ID Helper Utilities** (`/lib/email-blocks.ts`):
 
-   - `/lib/email-blocks.ts` (or similar) with:
-     - `findNodeByUid(doc, uid)` → `{ node, pos } | null`
-     - `updateNodeAttrsByUid(editor, uid, attrs)` → wraps a transaction that preserves other attrs
+   - `BLOCK_UID_ATTR` constant for centralized attribute name
+   - `findNodeByUidJson(doc, uid)` → `{ node, path } | null` (pure JSON traversal)
+   - `findNodeByUid(editor, uid)` → `{ node, pos } | null` (live editor search)
+   - `updateNodeAttrsByUid(editor, uid, attrs)` → `boolean` (safe attr updates with merge)
+   - All functions handle edge cases (null checks, missing UIDs, safe no-ops)
 
-3. Implement lightweight `useActiveBlock` hook (React-only bridge):
+3. **Active Block Hook** (`/hooks/use-active-block.ts`):
 
    ```ts
-   // /hooks/use-active-block.ts
-   type ActiveBlock = {
+   export type ActiveBlock = {
      uid: string;
      type: string;
      pos: number;
      domRect: DOMRect | null;
    } | null;
 
-   const useActiveBlock = () => {
-     const { editor } = useEditor();
-     const [activeBlock, setActiveBlock] = useState<ActiveBlock>(null);
-
-     useEffect(() => {
-       if (!editor) return;
-
-       const updateActiveBlock = () => {
-         const { state, view } = editor;
-         const { selection } = state;
-         const $from = selection.$from;
-         const block = $from.block();
-
-         if (!block?.attrs?.uid) {
-           setActiveBlock(null);
-           return;
-         }
-
-         const pos = $from.before($from.depth);
-         const dom = view.nodeDOM(pos) as HTMLElement | null;
-
-         setActiveBlock({
-           uid: block.attrs.uid,
-           type: block.type.name,
-           pos,
-           domRect: dom ? dom.getBoundingClientRect() : null,
-         });
-       };
-
-       editor.on("selectionUpdate", updateActiveBlock);
-       editor.on("transaction", updateActiveBlock);
-
-       return () => {
-         editor.off("selectionUpdate", updateActiveBlock);
-         editor.off("transaction", updateActiveBlock);
-       };
-     }, [editor]);
-
-     return activeBlock;
-   };
+   export function useActiveBlock(): ActiveBlock;
    ```
 
-   - This uses TipTap/ProseMirror selection APIs only – no custom ProseMirror plugin
-   - Works alongside `GlobalDragHandle` instead of replacing it
+   - Handles both text selections and NodeSelection (for images, embeds, etc.)
+   - Walks up document tree to find nearest ancestor with `uid`
+   - Subscribes to `selectionUpdate` and `transaction` events
+   - Optimized with state-update guards to prevent unnecessary re-renders
+   - Computes `domRect` via `view.nodeDOM(pos).getBoundingClientRect()`
+   - Must be used inside `EditorContent` context (requires TipTap's `useEditor`)
 
-4. Visual feedback for active block:
+4. **Dev Test Panel** (`/components/active-block-test-panel.tsx`):
 
-   - Add CSS/decoration to subtly highlight the active block (e.g. light background or left border) based on `uid` / selection
+   - Real-time display of active block info: UID, type, position, bounding box
+   - Dev-only (checks `process.env.NODE_ENV`)
+   - Integrated into email editor for easy testing
 
-**Success Criteria**:
+**Key Implementation Details**:
 
-- Every block node in JSON has a unique, stable `uid` attribute
-- IDs persist across edits, drag-and-drop, undo/redo, and paste
-- `useActiveBlock` returns `{ uid, type, pos, domRect }` for the focused block
-- Active block updates correctly on cursor movement, selection change, and drag
-- No noticeable performance impact
+- **NodeSelection handling**: Explicitly checks `selection instanceof NodeSelection` before falling back to `$from` ancestor walk, ensuring images and other atomic nodes are detected
+- **Performance**: O(1) per selection event, only reads layout once (`getBoundingClientRect`) per active block change
+- **Context correctness**: Hook usage moved inside `EditorContent` children to ensure proper TipTap context access
+- **State optimization**: Only updates React state when `uid`, `type`, `pos`, or `domRect` values actually change
 
-**Files to Create/Modify**:
+**Validated Behavior**:
 
-- `/lib/extensions/email-unique-id.ts` (or direct config where extensions are defined)
-- `/lib/email-blocks.ts` – Helpers for find/update by `uid`
-- `/hooks/use-active-block.ts` – React hook for active block
-- Update `/components/email-extensions.ts` to include `UniqueID` extension
+- ✅ Text blocks (paragraphs, headings, code) correctly report active block
+- ✅ List items and nested list items each have stable UIDs
+- ✅ Images and embeds (YouTube, Twitter) correctly detected via NodeSelection
+- ✅ Drag-and-drop maintains stable UIDs and updates `domRect` correctly
+- ✅ Split/merge operations preserve original UIDs where appropriate
+- ✅ Undo/redo keeps active block tracking accurate
+- ✅ No performance degradation even with rapid selection changes
+
+**Files Created**:
+
+- `/lib/email-blocks.ts` – Block ID utilities
+- `/hooks/use-active-block.ts` – Active block hook
+- `/components/active-block-test-panel.tsx` – Dev test UI
+
+**Files Modified**:
+
+- `/components/email-extensions.ts` – Added UniqueID configuration
+- `/components/email-template-editor.tsx` – Integrated test panel, exposed dev helpers
 
 ---
 
@@ -1995,29 +1976,85 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 **What was built**:
 
-1. ✅ Created `/hooks/use-active-block.ts` with `ActiveBlock` type:
-   - `{ uid: string; type: string; pos: number; domRect: DOMRect | null } | null`
-2. ✅ Implemented `useActiveBlock()` hook:
-   - Uses `useEditor()` to access the live TipTap editor instance
-   - Listens to `selectionUpdate` and `transaction` events
-   - Resolves the active block as the nearest ancestor node with `attrs.uid`
-3. ✅ Added explicit support for `NodeSelection` (e.g. images):
-   - Handles image selections by reading `selection.node` first
-   - Falls back to `$from`-based traversal for text selections
-4. ✅ Added `ActiveBlockTestPanel` dev UI in `/components/active-block-test-panel.tsx`:
-   - Shows current `uid`, `type`, `pos`, and `domRect`
-   - Mirrors Resend-style “hover block shows controls” behaviour for debugging
+1. ✅ Created `/hooks/use-active-block.ts` with comprehensive active block tracking:
+
+   ```ts
+   export type ActiveBlock = {
+     uid: string;
+     type: string;
+     pos: number;
+     domRect: DOMRect | null;
+   } | null;
+
+   export function useActiveBlock(): ActiveBlock;
+   ```
+
+2. ✅ Implemented `useActiveBlock()` hook with full editor integration:
+   - Uses `useEditor()` from TipTap React context (must be inside `EditorContent`)
+   - Subscribes to `selectionUpdate` and `transaction` events for real-time updates
+   - Resolves active block by walking up document tree to find nearest node with `uid`
+   - Computes `domRect` via `view.nodeDOM(pos).getBoundingClientRect()`
+3. ✅ Added explicit `NodeSelection` support for atomic nodes:
+   - Handles images, YouTube embeds, Twitter embeds via `selection instanceof NodeSelection`
+   - Reads `selection.node` directly for atomic nodes before falling back to ancestor walk
+   - Fixes issue where clicking images previously showed "no active block"
+4. ✅ Performance optimization with state guards:
+   - Only updates React state when `uid`, `type`, `pos`, or `domRect` values actually change
+   - Prevents unnecessary re-renders during continuous typing in same block
+   - O(1) per selection event, single layout read per active block change
+5. ✅ Created `ActiveBlockTestPanel` dev UI (`/components/active-block-test-panel.tsx`):
+   - Real-time display of: UID (with badge), type, position, DOM rect coordinates
+   - Shows bounding box details (top, left, width, height)
+   - Dev-only (checks `process.env.NODE_ENV === "development"`)
+   - Integrated into email editor for manual testing and debugging
 
 **Validated**:
 
-- ✅ Active block updates correctly across paragraphs, headings, lists, and images
-- ✅ UIDs reported by the hook match the JSON debug panel
-- ✅ `domRect` matches the on-screen block position and dimensions
-- ✅ Dragging blocks updates `pos`/`domRect` while keeping `uid` stable
-- ✅ Undo/redo and paste operations keep active block in sync with editor state
-- ✅ Hook avoids unnecessary React re-renders via structural equality guard on state
+- ✅ Text blocks (paragraphs, headings, code, blockquotes) correctly report active block
+- ✅ List items and nested list items each have unique, stable UIDs and correct detection
+- ✅ Images and media embeds (YouTube, Twitter) work via NodeSelection handling
+- ✅ UIDs reported by hook match JSON debug panel exactly
+- ✅ `domRect` accurately reflects on-screen block position and dimensions
+- ✅ Drag-and-drop updates `pos`/`domRect` while preserving `uid` stability
+- ✅ Split/merge operations maintain appropriate UID behavior
+- ✅ Undo/redo operations keep active block tracking synchronized
+- ✅ Paste operations regenerate UIDs correctly and update active block state
+- ✅ No performance degradation even with rapid selection changes
+- ✅ Hook properly integrates with TipTap context (works inside EditorContent children)
 
-**Next**: Part 4 - Visual feedback for active block (block highlighting)
+**Key Technical Decisions**:
+
+- Chose "nearest block with uid" semantics matching Resend's per-block styling behavior
+- Used ProseMirror's selection APIs directly (no custom plugin) for simplicity
+- Deferred TipTap 3.x NodePos API (would simplify code but requires major upgrade)
+- Positioned hook usage inside EditorContent context for proper editor access
+
+**Files Created**:
+
+- `/hooks/use-active-block.ts` – Active block hook with NodeSelection support
+- `/components/active-block-test-panel.tsx` – Dev test UI
+
+**Files Modified**:
+
+- `/components/email-template-editor.tsx` – Integrated test panel inside EditorContent
+
+---
+
+### Phase 3 Summary ✅ COMPLETE
+
+All three parts of Phase 3 are complete and validated. The system now has:
+
+- **Stable block identity** via UniqueID extension with pure UUIDs
+- **Programmatic access** to blocks via JSON and editor helper utilities
+- **Real-time active block tracking** with full support for text, lists, and media
+
+This foundation enables:
+
+- Phase 4: Side Rail UI with block-specific controls
+- Phase 5: Attributes panels for block styling
+- Future: Per-block metadata, styling inheritance, container-level controls
+
+**Next Phase**: Phase 4 - Side Rail UI (Attributes Button + GlobalDragHandle)
 
 ---
 
