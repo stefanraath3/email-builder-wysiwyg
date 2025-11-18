@@ -407,110 +407,116 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 ---
 
-### Phase 3: Block Identity & Selection System
+### Phase 3: Block Identity (UniqueID) + Active Block Hook
 
-**Goal**: Give each block a stable identity and implement block selection/tracking infrastructure
+**Goal**: Give each block a stable identity and expose the currently active block to React, without reinventing selection/drag behaviour that already exists via `GlobalDragHandle`.
 
 **Deliverables**:
 
-1. Add UniqueID to all block nodes:
+1. Integrate TipTap `UniqueID` extension for block nodes:
 
-   - Install/configure TipTap's UniqueID extension, or
-   - Create custom `BlockID` extension
-   - Add `id` attribute to all block-level node schemas
+   - Install `@tiptap/extension-unique-id`
+   - Configure with:
+     - `attributeName: "uid"`
+     - `types: ["paragraph", "heading", "blockquote", "codeBlock", "bulletList", "orderedList", "image", "youtube", "twitter"]`
+     - `generateID: ({ node }) => \`\${node.type.name}-\${crypto.randomUUID()}\``
+   - Ensure all new documents and loaded content have `attrs.uid` on these node types
+   - (Optional) add small server utility using `generateUniqueIds` for backfills
 
-2. Create `BlockMetaExtension`:
+2. Add helper utilities for working with block IDs:
 
-   ```ts
-   // /lib/extensions/block-meta.ts
-   const BlockMeta = Extension.create({
-     name: "blockMeta",
+   - `/lib/email-blocks.ts` (or similar) with:
+     - `findNodeByUid(doc, uid)` → `{ node, pos } | null`
+     - `updateNodeAttrsByUid(editor, uid, attrs)` → wraps a transaction that preserves other attrs
 
-     addStorage() {
-       return {
-         activeBlock: null, // { id, type, pos, domRect }
-       };
-     },
-
-     addProseMirrorPlugins() {
-       return [
-         new Plugin({
-           state: {
-             init: () => ({ activeBlockId: null, pos: null }),
-             apply: (tr, value) => {
-               // Track selection changes, update active block
-             },
-           },
-           props: {
-             handleDOMEvents: {
-               mousemove: (view, event) => {
-                 // Find block node under cursor
-                 // Update plugin state
-               },
-             },
-           },
-         }),
-       ];
-     },
-   });
-   ```
-
-3. Implement block position/rect calculation:
-
-   - Use `view.domAtPos()` and `view.nodeDOM()` to get DOM elements
-   - Calculate bounding rects for positioning UI
-   - Store in plugin state and expose via storage API
-
-4. Add React context/hook for block metadata:
+3. Implement lightweight `useActiveBlock` hook (React-only bridge):
 
    ```ts
    // /hooks/use-active-block.ts
+   type ActiveBlock = {
+     uid: string;
+     type: string;
+     pos: number;
+     domRect: DOMRect | null;
+   } | null;
+
    const useActiveBlock = () => {
      const { editor } = useEditor();
-     const [activeBlock, setActiveBlock] = useState(null);
+     const [activeBlock, setActiveBlock] = useState<ActiveBlock>(null);
 
      useEffect(() => {
-       // Subscribe to block metadata updates
-       // Update React state when active block changes
+       if (!editor) return;
+
+       const updateActiveBlock = () => {
+         const { state, view } = editor;
+         const { selection } = state;
+         const $from = selection.$from;
+         const block = $from.block();
+
+         if (!block?.attrs?.uid) {
+           setActiveBlock(null);
+           return;
+         }
+
+         const pos = $from.before($from.depth);
+         const dom = view.nodeDOM(pos) as HTMLElement | null;
+
+         setActiveBlock({
+           uid: block.attrs.uid,
+           type: block.type.name,
+           pos,
+           domRect: dom ? dom.getBoundingClientRect() : null,
+         });
+       };
+
+       editor.on("selectionUpdate", updateActiveBlock);
+       editor.on("transaction", updateActiveBlock);
+
+       return () => {
+         editor.off("selectionUpdate", updateActiveBlock);
+         editor.off("transaction", updateActiveBlock);
+       };
      }, [editor]);
 
      return activeBlock;
    };
    ```
 
-5. Visual feedback for active block:
-   - Add decoration to highlight active block background
-   - Subtle border or background color change
-   - Clear visual indicator without disrupting editing
+   - This uses TipTap/ProseMirror selection APIs only – no custom ProseMirror plugin
+   - Works alongside `GlobalDragHandle` instead of replacing it
+
+4. Visual feedback for active block:
+
+   - Add CSS/decoration to subtly highlight the active block (e.g. light background or left border) based on `uid` / selection
 
 **Success Criteria**:
 
-- Every block node in JSON has a unique, stable `id`
-- IDs persist across edits and page reloads
-- Can log active block metadata in dev console
-- Active block updates on cursor movement and hover
-- No performance degradation from tracking
+- Every block node in JSON has a unique, stable `uid` attribute
+- IDs persist across edits, drag-and-drop, undo/redo, and paste
+- `useActiveBlock` returns `{ uid, type, pos, domRect }` for the focused block
+- Active block updates correctly on cursor movement, selection change, and drag
+- No noticeable performance impact
 
-**Files to Create**:
+**Files to Create/Modify**:
 
-- `/lib/extensions/block-id.ts` – Block ID extension
-- `/lib/extensions/block-meta.ts` – Block selection/tracking
+- `/lib/extensions/email-unique-id.ts` (or direct config where extensions are defined)
+- `/lib/email-blocks.ts` – Helpers for find/update by `uid`
 - `/hooks/use-active-block.ts` – React hook for active block
-- Update `/components/extensions.ts` to include new extensions
+- Update `/components/email-extensions.ts` to include `UniqueID` extension
 
 ---
 
-### Phase 4: Side Rail UI (Drag Handle + Attributes Button)
+### Phase 4: Side Rail UI (Attributes Button + GlobalDragHandle)
 
-**Goal**: Add Resend-style hover rail with drag handle and attributes button
+**Goal**: Add a Resend-style side rail that sits alongside the existing `GlobalDragHandle`, providing an \"Open Attributes\" button for the currently active block.
 
 **Deliverables**:
 
-1. Verify and style GlobalDragHandle:
+1. Verify and refine `GlobalDragHandle` usage:
 
-   - Confirm `GlobalDragHandle` extension is active
-   - Adjust `.drag-handle` CSS for email editor aesthetic
-   - Ensure drag behavior works with email blocks
+   - Confirm `GlobalDragHandle` is active in `emailExtensions`
+   - Ensure `.drag-handle` styling works well for the email editor canvas
+   - Do **not** reimplement drag behaviour – rely on the extension
 
 2. Create `BlockSideRail` component:
 
@@ -518,9 +524,9 @@ Reuses novel's bubble menu with email-appropriate controls:
    // /components/block-side-rail.tsx
    const BlockSideRail = () => {
      const activeBlock = useActiveBlock();
-     const [showAttributes, setShowAttributes] = useState(false);
+     const [open, setOpen] = useState(false);
 
-     if (!activeBlock) return null;
+     if (!activeBlock || !activeBlock.domRect) return null;
 
      const { domRect } = activeBlock;
 
@@ -529,69 +535,71 @@ Reuses novel's bubble menu with email-appropriate controls:
          className="block-side-rail"
          style={{
            position: "absolute",
-           left: domRect.left - 40, // Position to left of block
+           left: domRect.left - 40,
            top: domRect.top,
-           // ... positioning logic
          }}
        >
-         {/* Drag handle icon (can reuse .drag-handle or custom) */}
-         <button className="drag-handle-button">
-           <GripVertical size={16} />
+         {/* Optional: visual drag icon, purely cosmetic since GlobalDragHandle does the real work */}
+         <button className="block-side-rail-drag" aria-hidden="true">
+           {/* e.g. GripVertical icon */}
          </button>
 
          {/* Attributes button */}
          <button
-           className="attributes-button"
-           onClick={() => setShowAttributes(true)}
+           className="block-side-rail-attributes"
+           onClick={() => setOpen(true)}
          >
-           <Settings size={16} />
+           {/* e.g. Settings icon */}
          </button>
+
+         <AttributesPanel
+           open={open}
+           onOpenChange={setOpen}
+           blockUid={activeBlock.uid}
+           blockType={activeBlock.type}
+         />
        </div>
      );
    };
    ```
 
-3. Position side rail dynamically:
+3. Position side rail using `useActiveBlock`:
 
-   - Subscribe to active block metadata
-   - Calculate rail position based on block's DOM rect
-   - Handle scroll events to keep rail aligned
-   - Hide when no active block
+   - Use `activeBlock.domRect` for `left/top` positioning
+   - Clamp within the editor container as needed
+   - Hide the rail when there is no active block or editor is unfocused
+   - Ensure it updates on scroll/resize (via the `transaction` hook in `useActiveBlock`)
 
-4. Integrate with drag behavior:
+4. Stub `AttributesPanel` (to be expanded in Phase 5):
 
-   - Wire drag handle button to trigger ProseMirror drag
-   - Or rely on GlobalDragHandle if it already covers the block
-   - Ensure smooth drag experience
+   - Right-side Sheet using shadcn/ui
+   - Accepts `blockUid` and `blockType`
+   - For now, show basic info:
+     - Block type
+     - Block UID
+     - Maybe raw attrs JSON
+   - Close button wired via `onOpenChange`
 
-5. Stub attributes panel:
+5. Hover states and animations:
 
-   - Create basic Sheet component
-   - Opens when attributes button clicked
-   - Shows active block type and ID for now
-   - Close button functional
-
-6. Hover states and animations:
-   - Fade in/out transitions for rail
-   - Hover effects on buttons
-   - Visual feedback for drag start
+   - Subtle fade-in for the side rail when the block becomes active
+   - Hover effects for the attributes button
+   - Ensure side rail feels responsive and not janky
 
 **Success Criteria**:
 
-- Side rail appears when hovering over any block
-- Rail positioned correctly to the left of the block
-- Rail follows block on scroll
-- Drag handle allows block reordering
-- Attributes button opens stub panel
-- Rail hides when cursor leaves block area
-- Smooth, non-janky UX
+- Side rail appears next to the currently active block
+- Rail tracks the block correctly when scrolling, editing, and dragging
+- Clicking the attributes button opens a stub `AttributesPanel` for that block
+- GlobalDragHandle continues to handle all drag behaviour without regressions
+- No visual overlap or weirdness between the drag handle and the side rail
 
-**Files to Create**:
+**Files to Create/Modify**:
 
-- `/components/block-side-rail.tsx` – Side rail component
-- `/components/attributes-panel.tsx` – Stub panel
-- Update `/components/email-template-editor.tsx` to render rail
-- Update `/styles/prosemirror.css` for rail styling
+- `/components/block-side-rail.tsx` – Side rail wrapper using `useActiveBlock`
+- `/components/attributes-panel.tsx` – Initial stub attributes panel
+- Update `/components/email-template-editor.tsx` to render `BlockSideRail`
+- Update `/styles/prosemirror.css` to style `.block-side-rail` and its buttons
 
 ---
 
