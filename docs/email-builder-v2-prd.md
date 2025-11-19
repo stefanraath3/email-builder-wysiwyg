@@ -1180,243 +1180,1099 @@ Below is the original design spec for reference:
 
 ---
 
-### Phase 7: React Email Transformer + Preview/Export
+### Phase 7: React Email Transformer + Preview/Export 🚧 IN PROGRESS
 
-**Goal**: Convert EmailTemplate to React Email components and enable preview/export
+**Goal**: Transform `EmailTemplate` → Email-safe HTML with inline styles that renders identically in email clients (Gmail, Outlook, Apple Mail, etc.)
 
-**Deliverables**:
+**Overview**: This phase builds the complete transformation pipeline from our TipTap JSON structure to production-ready email HTML using React Email. We'll implement this in 7 focused parts, from basic infrastructure to production-quality output.
 
-1. Install React Email:
+---
+
+#### **Part 1: React Email Setup & Basic Transformer** ✅ Foundation
+
+**Goal**: Install React Email, create the basic transformation pipeline, and validate it works with a single block type (paragraph).
+
+**Tasks**:
+
+1. Install dependencies:
 
    ```bash
-   pnpm add @react-email/components
+   pnpm add @react-email/components react-email
    ```
 
-2. Create transformer module:
+2. Create transformer module structure:
 
-   ```ts
+   ```
+   /lib/email-transform/
+     index.ts          # Main transformToReactEmail() function
+     nodes.tsx         # Node type transformers (paragraph, heading, etc.)
+     marks.tsx         # Inline mark transformers (bold, italic, link, etc.)
+     styles.ts         # Style conversion utilities (BlockStyles → CSSProperties)
+     types.ts          # TypeScript types for transformer
+   ```
+
+3. Implement basic transformer:
+
+   ```typescript
    // /lib/email-transform/index.ts
-   import { JSONContent } from "@tiptap/react";
-   import { EmailTemplate } from "@/types/email-template";
-   import * as ReactEmail from "@react-email/components";
-
-   export const transformToReactEmail = (template: EmailTemplate) => {
+   export function transformToReactEmail(
+     template: EmailTemplate
+   ): React.ReactElement {
      const { header, globalStyles, content } = template;
 
-     // Map TipTap JSON to React Email JSX
-     const body = transformContent(content, globalStyles);
-
      return (
-       <ReactEmail.Html>
-         <ReactEmail.Head>
+       <Html>
+         <Head>
            <title>{header.subject}</title>
-         </ReactEmail.Head>
-         <ReactEmail.Preview>{header.preview}</ReactEmail.Preview>
-         <ReactEmail.Body style={getBodyStyles(globalStyles)}>
-           <ReactEmail.Container style={getContainerStyles(globalStyles)}>
-             {body}
-           </ReactEmail.Container>
-         </ReactEmail.Body>
-       </ReactEmail.Html>
+         </Head>
+         <Preview>{header.preview}</Preview>
+         <Body style={getBodyStyles(globalStyles)}>
+           <Container style={getContainerStyles(globalStyles)}>
+             {transformContent(content, globalStyles)}
+           </Container>
+         </Body>
+       </Html>
      );
-   };
+   }
+   ```
 
-   const transformContent = (
-     content: JSONContent,
+4. Implement paragraph transformer (proof of concept):
+
+   ```typescript
+   // Transform paragraph node with inline content and styles
+   case 'paragraph':
+     const styles = getNodeStyles(node, globalStyles, 'paragraph');
+     return <Text key={node.attrs?.uid || idx} style={styles}>
+       {transformInlineContent(node.content, globalStyles)}
+     </Text>
+   ```
+
+5. Implement basic inline content transformer:
+
+   ```typescript
+   // Handle text nodes with marks (bold, italic, link, etc.)
+   function transformInlineContent(
+     content: JSONContent[] | undefined,
      globalStyles: GlobalStyles
-   ) => {
-     return content.content?.map((node, idx) => {
-       switch (node.type) {
-         case "paragraph":
-           return (
-             <ReactEmail.Text
-               key={idx}
-               style={getNodeStyles(node, globalStyles)}
-             >
-               {transformInlineContent(node.content)}
-             </ReactEmail.Text>
-           );
+   ): React.ReactNode[];
+   ```
 
-         case "heading":
-           return (
-             <ReactEmail.Heading
-               key={idx}
-               as={`h${node.attrs.level}`}
-               style={getNodeStyles(node, globalStyles)}
-             >
-               {transformInlineContent(node.content)}
-             </ReactEmail.Heading>
-           );
+6. Create style merger utility:
 
-         case "image":
-           return (
-             <ReactEmail.Img
-               key={idx}
-               src={node.attrs.src}
-               alt={node.attrs.alt}
-               style={getNodeStyles(node, globalStyles)}
-             />
-           );
+   ```typescript
+   // Merge block styles with global defaults for email export
+   // Convert from BlockStyles (our format) → CSSProperties (React Email format)
+   function getNodeStyles(
+     node: JSONContent,
+     globalStyles: GlobalStyles,
+     nodeType: string
+   ): React.CSSProperties;
+   ```
 
-         // ... more node types
+7. Test with minimal template:
+   - Create test function that transforms simple paragraph
+   - Verify HTML output is valid
+   - Check inline styles are applied
 
-         default:
-           return null;
+**Success Criteria**:
+
+- ✅ Can transform single paragraph with plain text to HTML
+- ✅ HTML includes inline styles from global typography
+- ✅ HTML is valid and email-safe (no external CSS)
+- ✅ No TypeScript errors
+- ✅ Can call `transformToReactEmail(template)` and get React element
+
+**Files to Create**:
+
+- `/lib/email-transform/index.ts` – Main transformer entry point
+- `/lib/email-transform/nodes.tsx` – Node transformation logic
+- `/lib/email-transform/marks.tsx` – Mark transformation logic
+- `/lib/email-transform/styles.ts` – Style conversion utilities
+- `/lib/email-transform/types.ts` – TypeScript types
+
+**Key Technical Decisions**:
+
+- Use existing `mergeWithGlobalStyles()` from `/lib/email-blocks.ts`
+- Convert `BlockStyles` → `React.CSSProperties` with proper camelCase
+- Use node `uid` as React `key` prop for stability
+- Handle missing/undefined content gracefully
+
+---
+
+#### **Part 2: Complete Node Transformers** 🔄 Coverage
+
+**Goal**: Implement transformers for all existing block types (headings, lists, blockquotes, code, images, embeds).
+
+**Tasks**:
+
+1. **Heading transformer** (H1-H3):
+
+   ```tsx
+   case 'heading':
+     const level = node.attrs?.level || 1;
+     const styles = getNodeStyles(node, globalStyles, 'heading');
+     return (
+       <Heading key={node.attrs?.uid || idx} as={`h${level}`} style={styles}>
+         {transformInlineContent(node.content, globalStyles)}
+       </Heading>
+     );
+   ```
+
+2. **List transformers** (bullet/ordered):
+
+   ```tsx
+   case 'bulletList':
+     // React Email doesn't have List component, use semantic HTML
+     return (
+       <ul key={node.attrs?.uid || idx} style={getNodeStyles(...)}>
+         {node.content?.map(item => transformNode(item, globalStyles))}
+       </ul>
+     );
+
+   case 'orderedList':
+     return <ol key={...} style={...}>{...}</ol>;
+
+   case 'listItem':
+     return <li key={...} style={...}>{...}</li>;
+   ```
+
+3. **Blockquote transformer**:
+
+   ```tsx
+   case 'blockquote':
+     // React Email doesn't have blockquote, use styled Text with border
+     return (
+       <Text key={...} style={{
+         ...getNodeStyles(node, globalStyles, 'blockquote'),
+         borderLeft: '4px solid #ddd',
+         paddingLeft: '16px',
+         fontStyle: 'italic',
+       }}>
+         {transformInlineContent(node.content, globalStyles)}
+       </Text>
+     );
+   ```
+
+4. **Code block transformer**:
+
+   ```tsx
+   case 'codeBlock':
+     return (
+       <CodeBlock key={...} style={getNodeStyles(node, globalStyles, 'codeBlock')}>
+         {node.content?.map(n => n.text).join('\n')}
+       </CodeBlock>
+     );
+   ```
+
+5. **Image transformer**:
+
+   ```tsx
+   case 'image':
+     const imgStyles = getNodeStyles(node, globalStyles, 'image');
+     return (
+       <Img
+         key={node.attrs?.uid || idx}
+         src={node.attrs?.src}
+         alt={node.attrs?.alt || ''}
+         width={node.attrs?.width}
+         height={node.attrs?.height}
+         style={imgStyles}
+       />
+     );
+   ```
+
+6. **Embed transformers** (YouTube, Twitter):
+
+   ```tsx
+   // Convert to image preview with link (email-safe fallback)
+   case 'youtube':
+     const videoId = extractYoutubeId(node.attrs?.src);
+     const thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+     return (
+       <Link key={...} href={node.attrs?.src}>
+         <Img src={thumbnail} alt="Video preview" style={{...}} />
+       </Link>
+     );
+
+   case 'twitter':
+     // Twitter embeds don't work in email, show link instead
+     return (
+       <Text key={...}>
+         <Link href={node.attrs?.url}>View post on X</Link>
+       </Text>
+     );
+   ```
+
+7. **Horizontal rule**:
+   ```tsx
+   case 'horizontalRule':
+     return <Hr key={...} style={getNodeStyles(node, globalStyles, 'horizontalRule')} />;
+   ```
+
+**Success Criteria**:
+
+- ✅ All existing block types transform correctly
+- ✅ Nested content works (lists with multiple levels)
+- ✅ Images include alt text, width, height
+- ✅ Embeds convert to email-safe fallbacks
+- ✅ Test with complex multi-block template (50+ blocks)
+- ✅ No React key warnings
+- ✅ All inline styles applied correctly
+
+**Test Templates**:
+
+- Template with all block types
+- Nested lists (3 levels deep)
+- Mixed content (text + images + code)
+- Empty blocks (paragraphs with no content)
+
+**Files to Modify**:
+
+- `/lib/email-transform/nodes.tsx` – Add all node transformers
+
+---
+
+#### **Part 3: Complete Inline Mark Transformers** 🎨 Richness
+
+**Goal**: Implement all inline marks (bold, italic, underline, strike, code, link, color, highlight).
+
+**Tasks**:
+
+1. **Basic formatting marks** (bold, italic, underline, strike):
+
+   ```tsx
+   function applyMarks(
+     text: string,
+     marks: Mark[] | undefined
+   ): React.ReactNode {
+     if (!marks || marks.length === 0) return text;
+
+     let result: React.ReactNode = text;
+
+     // Build nested structure for multiple marks
+     marks.forEach((mark) => {
+       switch (mark.type) {
+         case "bold":
+           result = <strong>{result}</strong>;
+           break;
+         case "italic":
+           result = <em>{result}</em>;
+           break;
+         case "underline":
+           result = <u>{result}</u>;
+           break;
+         case "strike":
+           result = <s>{result}</s>;
+           break;
        }
      });
-   };
+
+     return result;
+   }
    ```
 
-3. Implement style transformation:
+2. **Link mark**:
 
-   ```ts
-   // /lib/email-transform/styles.ts
-   const getNodeStyles = (node: JSONContent, globalStyles: GlobalStyles) => {
-     const blockStyles = node.attrs?.styles || {};
+   ```tsx
+   if (mark.type === "link") {
+     result = (
+       <Link
+         href={mark.attrs?.href}
+         style={{
+           color: globalStyles.link.color,
+           textDecoration: globalStyles.link.textDecoration,
+         }}
+       >
+         {result}
+       </Link>
+     );
+   }
+   ```
 
+3. **Inline code mark**:
+
+   ```tsx
+   if (mark.type === "code") {
+     result = (
+       <code
+         style={{
+           backgroundColor: globalStyles.inlineCode.backgroundColor,
+           color: globalStyles.inlineCode.textColor,
+           borderRadius: `${globalStyles.inlineCode.borderRadius}px`,
+           padding: "2px 4px",
+           fontFamily: "monospace",
+         }}
+       >
+         {result}
+       </code>
+     );
+   }
+   ```
+
+4. **Text color mark** (from TipTap's TextStyle):
+
+   ```tsx
+   if (mark.type === "textStyle" && mark.attrs?.color) {
+     result = <span style={{ color: mark.attrs.color }}>{result}</span>;
+   }
+   ```
+
+5. **Highlight mark**:
+
+   ```tsx
+   if (mark.type === "highlight") {
+     result = (
+       <span style={{ backgroundColor: mark.attrs?.color || "#ffeb3b" }}>
+         {result}
+       </span>
+     );
+   }
+   ```
+
+6. **Handle mark nesting** (bold + italic + link):
+
+   ```tsx
+   // Marks must be applied in correct order:
+   // 1. Formatting (bold, italic, underline, strike)
+   // 2. Code
+   // 3. Color/highlight
+   // 4. Link (outermost)
+
+   const orderedMarks = sortMarksByPriority(marks);
+   orderedMarks.forEach((mark) => (result = applyMark(mark, result)));
+   ```
+
+**Success Criteria**:
+
+- ✅ All formatting marks work
+- ✅ Nested marks render correctly (bold italic link)
+- ✅ Link colors use global styles
+- ✅ Inline code uses global styles
+- ✅ Text color overrides work
+- ✅ Highlight backgrounds work
+- ✅ Mark combinations don't break (bold + underline + link)
+
+**Test Cases**:
+
+- Paragraph with all mark combinations
+- Link with bold text
+- Inline code with custom color
+- Nested marks (3+ levels)
+
+**Files to Modify**:
+
+- `/lib/email-transform/marks.tsx` – Complete mark transformation
+
+---
+
+#### **Part 4: Style System Integration** ⚙️ Accuracy
+
+**Goal**: Ensure block styles + global styles merge correctly and generate email-safe inline CSS with perfect WYSIWYG accuracy.
+
+**Tasks**:
+
+1. **Implement comprehensive style merger**:
+
+   ```typescript
+   function getNodeStyles(
+     node: JSONContent,
+     globalStyles: GlobalStyles,
+     nodeType: string
+   ): React.CSSProperties {
+     // 1. Get block-specific styles from node.attrs.styles
+     const blockStyles: BlockStyles = node.attrs?.styles || {};
+
+     // 2. Merge with global defaults (reuse existing utility)
+     const mergedStyles = mergeWithGlobalStyles(
+       blockStyles,
+       globalStyles,
+       nodeType
+     );
+
+     // 3. Convert to React.CSSProperties (camelCase, proper values)
+     return convertToReactEmailCSS(mergedStyles, { nodeType });
+   }
+   ```
+
+2. **Convert BlockStyles → CSSProperties**:
+
+   ```typescript
+   function convertToReactEmailCSS(
+     styles: BlockStyles,
+     options: { nodeType: string; isImage?: boolean }
+   ): React.CSSProperties {
+     const css: React.CSSProperties = {};
+
+     // Background
+     if (styles.backgroundColor) {
+       css.backgroundColor = styles.backgroundColor;
+     }
+
+     // Typography
+     if (styles.textColor) css.color = styles.textColor;
+     if (styles.fontSize) css.fontSize = `${styles.fontSize}px`;
+     if (styles.fontWeight) css.fontWeight = styles.fontWeight;
+     if (styles.lineHeight) css.lineHeight = styles.lineHeight;
+     if (styles.fontFamily) css.fontFamily = styles.fontFamily;
+     if (styles.textDecoration) css.textDecoration = styles.textDecoration;
+
+     // Layout
+     if (styles.padding) {
+       css.paddingTop = `${styles.padding.top}px`;
+       css.paddingRight = `${styles.padding.right}px`;
+       css.paddingBottom = `${styles.padding.bottom}px`;
+       css.paddingLeft = `${styles.padding.left}px`;
+     }
+
+     // Alignment (special handling for images)
+     if (styles.textAlign) {
+       if (options.isImage) {
+         // Images: use display:block + margins (email-safe)
+         css.display = "block";
+         if (styles.textAlign === "center") {
+           css.marginLeft = "auto";
+           css.marginRight = "auto";
+         } else if (styles.textAlign === "right") {
+           css.marginLeft = "auto";
+           css.marginRight = "0";
+         } else {
+           css.marginLeft = "0";
+           css.marginRight = "auto";
+         }
+       } else {
+         css.textAlign = styles.textAlign;
+       }
+     }
+
+     // Borders
+     if (styles.borderRadius) css.borderRadius = `${styles.borderRadius}px`;
+     if (styles.borderWidth) css.borderWidth = `${styles.borderWidth}px`;
+     if (styles.borderStyle) css.borderStyle = styles.borderStyle;
+     if (styles.borderColor) css.borderColor = styles.borderColor;
+
+     // Dimensions
+     if (styles.width) css.width = `${styles.width}px`;
+     if (styles.height && styles.height !== "auto") {
+       css.height = `${styles.height}px`;
+     } else if (styles.height === "auto") {
+       css.height = "auto";
+     }
+
+     return css;
+   }
+   ```
+
+3. **Apply global styles to body/container**:
+
+   ```typescript
+   function getBodyStyles(globalStyles: GlobalStyles): React.CSSProperties {
      return {
-       // Merge global defaults with block-specific overrides
-       backgroundColor: blockStyles.background || "transparent",
-       borderRadius: blockStyles.borderRadius || globalStyles.borderRadius,
-       padding: blockStyles.padding
-         ? `${blockStyles.padding.top}px ${blockStyles.padding.right}px ${blockStyles.padding.bottom}px ${blockStyles.padding.left}px`
-         : undefined,
-       color: blockStyles.textColor || globalStyles.typography.color,
-       fontSize: blockStyles.fontSize || globalStyles.typography.fontSize,
-       // ... all style mappings
+       backgroundColor: globalStyles.body.backgroundColor,
+       margin: 0,
+       padding: 0,
+       fontFamily: globalStyles.typography.fontFamily,
+       fontSize: `${globalStyles.typography.fontSize}px`,
+       lineHeight: globalStyles.typography.lineHeight,
+       color: globalStyles.typography.color,
      };
-   };
+   }
+
+   function getContainerStyles(
+     globalStyles: GlobalStyles
+   ): React.CSSProperties {
+     const { container } = globalStyles;
+     const css: React.CSSProperties = {
+       maxWidth: `${container.width}px`,
+       backgroundColor: container.backgroundColor,
+       paddingTop: `${container.padding.top}px`,
+       paddingRight: `${container.padding.right}px`,
+       paddingBottom: `${container.padding.bottom}px`,
+       paddingLeft: `${container.padding.left}px`,
+     };
+
+     // Apply alignment
+     if (container.align === "center") {
+       css.marginLeft = "auto";
+       css.marginRight = "auto";
+     } else if (container.align === "right") {
+       css.marginLeft = "auto";
+     }
+
+     return css;
+   }
    ```
 
-4. Build Preview component:
+4. **Test style inheritance hierarchy**:
+
+   ```
+   Priority (high to low):
+   1. Block-level overrides (node.attrs.styles)
+   2. Global defaults (globalStyles.typography, etc.)
+   3. React Email component defaults
+   ```
+
+5. **Email-safe CSS validation**:
+   ```typescript
+   // Filter out CSS properties that don't work in email clients
+   const EMAIL_SAFE_PROPERTIES = [
+     "backgroundColor",
+     "color",
+     "fontSize",
+     "fontWeight",
+     "lineHeight",
+     "textAlign",
+     "padding",
+     "margin",
+     "border",
+     "borderRadius",
+     "width",
+     "height",
+     "display",
+     "textDecoration",
+     "fontFamily",
+   ];
+   ```
+
+**Success Criteria**:
+
+- ✅ Styles merge correctly (block overrides > global defaults)
+- ✅ CSS is email-safe (inline only, no external stylesheets)
+- ✅ Container/body styles applied correctly
+- ✅ Alignment works (left/center/right)
+- ✅ Padding/margins work in email clients
+- ✅ **WYSIWYG match: editor view === exported HTML (95%+ visual accuracy)**
+- ✅ Test in browser: exported HTML renders correctly
+
+**Test Cases**:
+
+- Template with mixed styled/unstyled blocks
+- Container alignment variations (left/center/right)
+- Padding variations (0, 16px, 32px)
+- Side-by-side comparison: editor vs. exported HTML screenshot
+
+**Files to Create**:
+
+- `/lib/email-transform/styles.ts` – Complete style conversion
+
+---
+
+#### **Part 5: Preview Mode UI** 👁️ Visualization
+
+**Goal**: Add preview tab that shows the final email in an iframe, updating in real-time.
+
+**Tasks**:
+
+1. **Create Preview component**:
 
    ```tsx
    // /components/email-preview.tsx
-   const EmailPreview = ({ template }: { template: EmailTemplate }) => {
-     const reactEmailJSX = transformToReactEmail(template);
-     const html = render(reactEmailJSX); // Use React Email's render
+   "use client";
+
+   import { useMemo, useState } from "react";
+   import { render } from "@react-email/render";
+   import { transformToReactEmail } from "@/lib/email-transform";
+   import type { EmailTemplate } from "@/types/email-template";
+
+   export function EmailPreview({ template }: { template: EmailTemplate }) {
+     const [isLoading, setIsLoading] = useState(true);
+
+     const html = useMemo(() => {
+       try {
+         const reactEmail = transformToReactEmail(template);
+         return render(reactEmail);
+       } catch (error) {
+         console.error("Preview render error:", error);
+         return "<p>Error rendering preview</p>";
+       }
+     }, [template]);
 
      return (
-       <div className="email-preview">
+       <div className="email-preview-wrapper">
+         {isLoading && <div>Rendering preview...</div>}
          <iframe
            srcDoc={html}
+           onLoad={() => setIsLoading(false)}
            style={{
              width: "100%",
              minHeight: "600px",
-             border: "1px solid #e5e7eb",
+             border: "1px solid hsl(var(--border))",
              borderRadius: "8px",
+             backgroundColor: "white",
            }}
          />
        </div>
      );
-   };
+   }
    ```
 
-5. Add Preview tab to editor:
-
-   - Tabs component: "Edit" | "Preview"
-   - Edit shows normal editor
-   - Preview shows rendered email in iframe
-   - Toggle between views
-
-6. Build Export functionality:
+2. **Add tabs to editor page**:
 
    ```tsx
-   // /components/export-menu.tsx
-   const ExportMenu = ({ template }: { template: EmailTemplate }) => {
-     const exportHTML = async () => {
-       const jsx = transformToReactEmail(template);
-       const html = await render(jsx);
+   // /app/email-editor/page.tsx
+   import {
+     Tabs,
+     TabsContent,
+     TabsList,
+     TabsTrigger,
+   } from "@/components/ui/tabs";
 
-       // Download as file
-       const blob = new Blob([html], { type: "text/html" });
-       const url = URL.createObjectURL(blob);
-       const a = document.createElement("a");
-       a.href = url;
-       a.download = `${template.header.subject || "email"}.html`;
-       a.click();
-     };
+   export default function EmailEditorPage() {
+     return (
+       <EmailTemplateProvider>
+         <Tabs defaultValue="edit" className="flex-1">
+           <div className="border-b">
+             <TabsList>
+               <TabsTrigger value="edit">Edit</TabsTrigger>
+               <TabsTrigger value="preview">Preview</TabsTrigger>
+             </TabsList>
+           </div>
+
+           <TabsContent value="edit" className="flex-1">
+             <EmailTemplateEditor />
+           </TabsContent>
+
+           <TabsContent value="preview" className="flex-1 p-6">
+             <EmailPreviewWrapper />
+           </TabsContent>
+         </Tabs>
+       </EmailTemplateProvider>
+     );
+   }
+   ```
+
+3. **Create preview wrapper with context access**:
+
+   ```tsx
+   function EmailPreviewWrapper() {
+     const { template } = useEmailTemplateContext();
+     return <EmailPreview template={template} />;
+   }
+   ```
+
+4. **Add loading state**:
+
+   - Show spinner while rendering
+   - Smooth transition when loaded
+
+5. **Add error boundary**:
+
+   ```tsx
+   <ErrorBoundary fallback={<PreviewError />}>
+     <EmailPreview template={template} />
+   </ErrorBoundary>
+   ```
+
+6. **Optimize rendering performance**:
+
+   ```tsx
+   // Debounce re-render on template changes
+   const debouncedTemplate = useDebounce(template, 300);
+
+   const html = useMemo(() => {
+     return renderEmailHTML(debouncedTemplate);
+   }, [debouncedTemplate]);
+   ```
+
+7. **Add preview controls**:
+   ```tsx
+   <div className="preview-toolbar">
+     <button onClick={refreshPreview}>Refresh</button>
+     <button onClick={openInNewTab}>Open in new tab</button>
+   </div>
+   ```
+
+**Success Criteria**:
+
+- ✅ Preview tab shows rendered email
+- ✅ Preview updates on template changes (debounced 300ms)
+- ✅ Preview matches editor visually (WYSIWYG)
+- ✅ Loading states work smoothly
+- ✅ Errors handled gracefully with fallback UI
+- ✅ No performance issues (renders in < 500ms)
+- ✅ Iframe resizes to content height
+
+**Files to Create**:
+
+- `/components/email-preview.tsx` – Preview iframe component
+
+**Files to Modify**:
+
+- `/app/email-editor/page.tsx` – Add tabs for Edit/Preview
+
+---
+
+#### **Part 6: Export Functionality** 📤 Delivery
+
+**Goal**: Allow users to copy HTML to clipboard or download as file.
+
+**Tasks**:
+
+1. **Create export utility functions**:
+
+   ```typescript
+   // /lib/email-transform/export.ts
+   import { render } from "@react-email/render";
+   import { transformToReactEmail } from "./index";
+   import type { EmailTemplate } from "@/types/email-template";
+
+   export async function exportToHTML(
+     template: EmailTemplate
+   ): Promise<string> {
+     const reactEmail = transformToReactEmail(template);
+     const html = await render(reactEmail, {
+       pretty: true, // Format HTML nicely
+     });
+     return html;
+   }
+
+   export function generateFilename(template: EmailTemplate): string {
+     const subject = template.header.subject || "email";
+     const slug = subject
+       .toLowerCase()
+       .replace(/[^a-z0-9]+/g, "-")
+       .replace(/^-|-$/g, "");
+     return `${slug}.html`;
+   }
+   ```
+
+2. **Create export menu component**:
+
+   ```tsx
+   // /components/email-export-menu.tsx
+   "use client";
+
+   import { useState } from "react";
+   import {
+     DropdownMenu,
+     DropdownMenuContent,
+     DropdownMenuItem,
+     DropdownMenuTrigger,
+   } from "@/components/ui/dropdown-menu";
+   import { Button } from "@/components/ui/button";
+   import { Download, Copy, FileJson } from "lucide-react";
+   import { toast } from "sonner";
+   import {
+     exportToHTML,
+     generateFilename,
+   } from "@/lib/email-transform/export";
+   import type { EmailTemplate } from "@/types/email-template";
+
+   export function EmailExportMenu({ template }: { template: EmailTemplate }) {
+     const [isExporting, setIsExporting] = useState(false);
 
      const copyHTML = async () => {
-       const jsx = transformToReactEmail(template);
-       const html = await render(jsx);
-       await navigator.clipboard.writeText(html);
-       toast.success("HTML copied to clipboard");
+       try {
+         setIsExporting(true);
+         const html = await exportToHTML(template);
+         await navigator.clipboard.writeText(html);
+         toast.success("HTML copied to clipboard!");
+       } catch (error) {
+         toast.error("Failed to copy HTML");
+         console.error(error);
+       } finally {
+         setIsExporting(false);
+       }
+     };
+
+     const downloadHTML = async () => {
+       try {
+         setIsExporting(true);
+         const html = await exportToHTML(template);
+         const blob = new Blob([html], { type: "text/html" });
+         const url = URL.createObjectURL(blob);
+         const a = document.createElement("a");
+         a.href = url;
+         a.download = generateFilename(template);
+         a.click();
+         URL.revokeObjectURL(url);
+         toast.success("HTML file downloaded!");
+       } catch (error) {
+         toast.error("Failed to download HTML");
+         console.error(error);
+       } finally {
+         setIsExporting(false);
+       }
+     };
+
+     const copyJSON = async () => {
+       try {
+         const json = JSON.stringify(template, null, 2);
+         await navigator.clipboard.writeText(json);
+         toast.success("JSON copied to clipboard!");
+       } catch (error) {
+         toast.error("Failed to copy JSON");
+       }
      };
 
      return (
        <DropdownMenu>
          <DropdownMenuTrigger asChild>
-           <Button variant="outline">Export</Button>
+           <Button variant="outline" disabled={isExporting}>
+             {isExporting ? "Exporting..." : "Export"}
+           </Button>
          </DropdownMenuTrigger>
-         <DropdownMenuContent>
-           <DropdownMenuItem onClick={copyHTML}>Copy HTML</DropdownMenuItem>
-           <DropdownMenuItem onClick={exportHTML}>
+         <DropdownMenuContent align="end">
+           <DropdownMenuItem onClick={copyHTML}>
+             <Copy className="mr-2 h-4 w-4" />
+             Copy HTML
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={downloadHTML}>
+             <Download className="mr-2 h-4 w-4" />
              Download HTML
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={copyJSON}>
+             <FileJson className="mr-2 h-4 w-4" />
+             Copy JSON
            </DropdownMenuItem>
          </DropdownMenuContent>
        </DropdownMenu>
      );
-   };
+   }
    ```
 
-7. Handle inline content (bold, italic, links):
+3. **Wire export button to header**:
 
-   ```ts
-   const transformInlineContent = (content?: JSONContent[]) => {
-     return content?.map((node, idx) => {
-       if (node.type === "text") {
-         let text: React.ReactNode = node.text;
+   ```tsx
+   // /app/email-editor/page.tsx
+   import { EmailExportMenu } from "@/components/email-export-menu";
 
-         node.marks?.forEach((mark) => {
-           switch (mark.type) {
-             case "bold":
-               text = <strong key={idx}>{text}</strong>;
-               break;
-             case "italic":
-               text = <em key={idx}>{text}</em>;
-               break;
-             case "link":
-               text = (
-                 <ReactEmail.Link
-                   key={idx}
-                   href={mark.attrs.href}
-                   style={getLinkStyles(globalStyles)}
-                 >
-                   {text}
-                 </ReactEmail.Link>
-               );
-               break;
-             // ... more marks
-           }
-         });
+   // Replace placeholder export button:
+   <EmailExportMenu template={template} />;
+   ```
 
-         return text;
+4. **Add toast notifications** (already using sonner):
+
+   - Success feedback for all export actions
+   - Error handling with user-friendly messages
+
+5. **Add keyboard shortcut**:
+   ```tsx
+   // Cmd/Ctrl + Shift + E to export
+   useEffect(() => {
+     const handleKeyDown = (e: KeyboardEvent) => {
+       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "e") {
+         e.preventDefault();
+         downloadHTML();
        }
-       return null;
-     });
-   };
+     };
+     window.addEventListener("keydown", handleKeyDown);
+     return () => window.removeEventListener("keydown", handleKeyDown);
+   }, [template]);
    ```
 
 **Success Criteria**:
 
-- Clicking "Preview" tab shows email rendered via React Email
-- Preview visually matches editor (WYSIWYG validated)
-- Export > Copy HTML produces valid email HTML string
-- Export > Download HTML downloads file
-- HTML works in browser (open downloaded file)
-- All block types transform correctly
-- Global styles + block styles both applied in output
-- Inline formatting (bold, italic, links) preserved
+- ✅ Copy HTML works (copies to clipboard)
+- ✅ Download HTML works (downloads file)
+- ✅ Filename uses subject line (sanitized)
+- ✅ Toast notifications work (success/error)
+- ✅ HTML is properly formatted (pretty print)
+- ✅ HTML opens correctly in browsers
+- ✅ HTML ready to send via email service
+- ✅ Loading states prevent double-clicks
+- ✅ Keyboard shortcut works (Cmd+Shift+E)
 
 **Files to Create**:
 
-- `/lib/email-transform/index.ts` – Main transformer
-- `/lib/email-transform/styles.ts` – Style mapping utilities
-- `/lib/email-transform/nodes.ts` – Node type transformers
-- `/components/email-preview.tsx` – Preview iframe component
-- `/components/export-menu.tsx` – Export dropdown
-- Update `/components/email-template-editor.tsx` to add tabs and export
+- `/lib/email-transform/export.ts` – Export utilities
+- `/components/email-export-menu.tsx` – Export dropdown menu
+
+**Files to Modify**:
+
+- `/app/email-editor/page.tsx` – Wire export button
+
+---
+
+#### **Part 7: Testing & Refinement** ✅ Quality
+
+**Goal**: Comprehensive testing, bug fixes, and email client compatibility validation.
+
+**Tasks**:
+
+1. **Create test templates**:
+
+   ```typescript
+   // /lib/email-transform/test-templates.ts
+   export const testTemplates = {
+     simple: createSimpleTemplate(), // Single paragraph
+     complex: createComplexTemplate(), // All block types
+     styled: createStyledTemplate(), // Heavy custom styling
+     nested: createNestedTemplate(), // Deep lists, formatting
+     realWorld: createNewsletterTemplate(), // Realistic newsletter
+   };
+   ```
+
+2. **Visual regression testing**:
+
+   ```
+   Process:
+   1. Export each test template to HTML
+   2. Open in browser
+   3. Take screenshot
+   4. Open editor with same template
+   5. Take screenshot
+   6. Compare side-by-side
+   7. Document differences (goal: <5% visual diff)
+   ```
+
+3. **Email client testing**:
+
+   ```
+   Test HTML in:
+   - Gmail (web, iOS, Android)
+   - Outlook (desktop 2019/2021, web)
+   - Apple Mail (macOS, iOS)
+   - Yahoo Mail
+   - Proton Mail
+
+   Test checklist:
+   - ✅ Renders without broken layout
+   - ✅ Styles applied correctly
+   - ✅ Images load and display
+   - ✅ Links work
+   - ✅ Text readable
+   - ✅ Responsive (mobile)
+
+   Document:
+   - Rendering issues
+   - Style differences
+   - Broken features
+   - Client-specific hacks needed
+   ```
+
+4. **Fix compatibility issues**:
+
+   ```typescript
+   // Add email client-specific handling
+   function addEmailClientHacks(html: string): string {
+     // Outlook-specific MSO conditionals
+     // Gmail class name prefixing
+     // Apple Mail webkit-specific fixes
+   }
+   ```
+
+5. **Performance testing**:
+
+   ```
+   Metrics:
+   - Large template (100+ blocks): Transform in < 1s
+   - Preview render: < 500ms
+   - Export to HTML: < 1s
+   - Memory usage: Stable (no leaks)
+   ```
+
+6. **Edge case testing**:
+
+   ```
+   Test cases:
+   - Empty template (just container)
+   - No header fields
+   - Missing styles
+   - Malformed JSON (recovery)
+   - Very long content (10,000 words)
+   - Many images (50+)
+   - Deep nesting (10 levels of lists)
+   - Unicode/emoji content
+   - Special characters in links
+   ```
+
+7. **Error handling**:
+
+   ```typescript
+   // Graceful degradation
+   try {
+     return transformNode(node, globalStyles);
+   } catch (error) {
+     console.error('Transform error:', error, node);
+     return <Text key={...}><!-- Transform error: {node.type} --></Text>;
+   }
+   ```
+
+8. **Create comparison tool**:
+
+   ```tsx
+   // /components/email-comparison-view.tsx
+   // Side-by-side: Editor | Preview
+   // Highlight differences
+   ```
+
+9. **Add validation warnings**:
+   ```typescript
+   // Warn about potential email issues
+   - Image without alt text
+   - Link without href
+   - Very large images
+   - Unsupported CSS properties
+   - Missing subject/preview
+   ```
+
+**Success Criteria**:
+
+- ✅ All test templates export correctly
+- ✅ WYSIWYG accuracy > 95% (editor ≈ export)
+- ✅ Email client rendering > 90% accurate
+- ✅ No crashes on edge cases
+- ✅ Performance acceptable (< 1s for 100 blocks)
+- ✅ All errors handled gracefully
+- ✅ Validation warnings helpful
+
+**Test Deliverables**:
+
+- Test template library
+- Email client compatibility matrix
+- Visual comparison screenshots
+- Performance benchmarks
+- Bug fix list
+
+**Files to Create**:
+
+- `/lib/email-transform/test-templates.ts` – Test template library
+- `/lib/email-transform/validation.ts` – Email validation utilities
+
+---
+
+### Phase 7 Summary
+
+**7 Parts Breakdown**:
+
+1. ✅ **Basic Transformer** – Get pipeline working (paragraph only)
+2. 🔄 **Node Transformers** – All block types
+3. 🎨 **Mark Transformers** – All inline formatting
+4. ⚙️ **Style Integration** – Perfect style merging
+5. 👁️ **Preview UI** – Live iframe preview
+6. 📤 **Export** – Copy/download functionality
+7. ✅ **Testing & Refinement** – Production quality
+
+**Key Success Metrics**:
+
+- ✅ Transform pipeline works end-to-end
+- ✅ All existing blocks export correctly
+- ✅ WYSIWYG accuracy maintained (95%+)
+- ✅ Email client compatibility validated (Gmail, Outlook, Apple Mail)
+- ✅ Export/preview UI functional
+- ✅ Production-ready quality
+
+**Estimated Effort per Part**:
+
+- Part 1 (Foundation): 2-3 hours
+- Part 2 (Nodes): 3-4 hours
+- Part 3 (Marks): 2 hours
+- Part 4 (Styles): 3-4 hours
+- Part 5 (Preview): 2 hours
+- Part 6 (Export): 1-2 hours
+- Part 7 (Testing): 3-4 hours
+
+**Total Estimate**: 16-22 hours
+
+**Dependencies**:
+
+- Parts 1-4 are sequential (must complete in order)
+- Parts 5-6 can be done in parallel after Part 4
+- Part 7 requires all previous parts complete
+
+---
+
+**Next Phase**: Phase 8 - Email-Specific Block Nodes (Button, Divider, Section, Social Links, Unsubscribe, HTML, Variables)
 
 ---
 
