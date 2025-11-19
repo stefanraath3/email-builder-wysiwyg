@@ -62,7 +62,7 @@ export function createDefaultGlobalStyles(): GlobalStyles {
       borderRadius: 8,
     },
     button: {
-      backgroundColor: "#2563eb",
+      backgroundColor: "#000000",
       textColor: "#ffffff",
       borderRadius: 4,
       padding: {

@@ -87,17 +87,17 @@ export function getNodeStyles(
     css.display = css.display || "inline-block";
     css.textDecoration = css.textDecoration || "none";
     css.cursor = "pointer";
-    
+
     // Default button background if not set
     if (!blockStyles.backgroundColor && !mergedStyles.backgroundColor) {
-      css.backgroundColor = "#2563eb";
+      css.backgroundColor = "#000000";
     }
-    
+
     // Default button text color if not set
     if (!blockStyles.textColor && !mergedStyles.textColor) {
       css.color = "#ffffff";
     }
-    
+
     // Default button padding if not set
     if (!blockStyles.padding && !mergedStyles.padding) {
       css.paddingTop = "12px";
@@ -105,9 +105,12 @@ export function getNodeStyles(
       css.paddingBottom = "12px";
       css.paddingLeft = "24px";
     }
-    
+
     // Default border radius if not set
-    if (blockStyles.borderRadius === undefined && mergedStyles.borderRadius === undefined) {
+    if (
+      blockStyles.borderRadius === undefined &&
+      mergedStyles.borderRadius === undefined
+    ) {
       css.borderRadius = "4px";
     }
   }

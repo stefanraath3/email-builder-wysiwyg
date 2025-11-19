@@ -80,7 +80,7 @@ export const EmailButton = Node.create({
       buttonStyleProps.push(`background-color: ${blockStyles.backgroundColor}`);
     } else {
       buttonStyleProps.push(
-        `background-color: var(--email-button-bg, #2563eb)`
+        `background-color: var(--email-button-bg, #000000)`
       );
     }
 

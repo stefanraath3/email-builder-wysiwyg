@@ -2610,9 +2610,9 @@ Each email block requires **4 touchpoints**:
 
 ---
 
-#### **Part 1: Button Block** 🟢 EASIEST (Start Here)
+#### **Part 1: Button Block** ✅ COMPLETE
 
-**Complexity**: Low | **Estimated**: 3-4 hours | **Dependencies**: None
+**Complexity**: Low | **Actual Time**: ~4 hours | **Dependencies**: None
 
 **Why first?** Simple atom node, clear use case, React Email has native `<Button>` component, good learning block for the pattern.
 
@@ -2737,30 +2737,95 @@ Each email block requires **4 touchpoints**:
 
 - ✅ Insert button via `/button`
 - ✅ Edit text + URL in attributes panel
-- ✅ Style button (background, text color, padding, border radius)
+- ✅ Style button (background, text color, padding, border radius, font size, font weight, line height, text decoration)
 - ✅ Button inherits global button styles
 - ✅ Exports to React Email `<Button>` with proper href and styling
 - ✅ Button is draggable and has attributes handle
 - ✅ Clicking button in editor doesn't navigate (preventDefault)
+- ✅ Alignment works (left/center/right)
+- ✅ Typography controls available in attributes panel
+- ✅ Adding style overrides shows inherited defaults instead of creating immediate overrides
 
-**Files to create**:
+**What was built**:
+
+1. ✅ Created `/lib/extensions/email-button.ts` with full button implementation:
+   - Atom node with text, href, styles attributes
+   - Renders as wrapper div with anchor tag inside
+   - Default alignment: left (matches other blocks)
+   - Button displays as `inline-block` for proper alignment behavior
+   - Click preventDefault to avoid navigation in editor
+   - Global button style inheritance via merge system
+
+2. ✅ Updated `/components/email-slash-command.tsx`:
+   - Added Button command to LAYOUT category
+   - Inserts button with default "Click me" text
+
+3. ✅ Updated `/lib/email-transform/nodes.tsx`:
+   - Added `buttonBlock` case with React Email `<Button>` component
+   - Wrapped in alignment div for email-safe positioning
+   - Default button styles applied (blue background, white text, padding, border-radius)
+   - Full style merging with global defaults
+
+4. ✅ Updated `/components/attributes-panel.tsx`:
+   - Added Button Text input field
+   - Added Button URL input field with placeholder
+   - Standard styles work (background, text color, padding, border radius)
+
+5. ✅ Updated `/components/attributes-panel/style-dropdown-menu.tsx`:
+   - Added typography options to button blocks
+   - Button blocks now show: Appearance + Typography + Layout style categories
+
+6. ✅ Updated `/lib/email-blocks.ts`:
+   - Added button to `getDefaultStylesForBlockType()` function
+   - Added button to `mergeWithGlobalStyles()` function
+   - Buttons inherit: backgroundColor, textColor, borderRadius, padding from global styles
+
+7. ✅ Updated `/lib/email-transform/styles.ts`:
+   - Added default button styling in email export
+   - Added textDecoration support to style conversion
+   - Button defaults: blue bg (#2563eb), white text, 12px/24px padding, 4px radius
+
+8. ✅ Fixed attributes panel UX:
+   - Adding style override now shows inherited value from global styles
+   - No immediate override created until user changes the value
+   - Better UX: users see current value (inherited or overridden) when adding control
+
+**Files created (1)**:
 
 - `/lib/extensions/email-button.ts` - Button extension
 
-**Files to modify**:
+**Files modified (7)**:
 
-- `/components/email-slash-command.tsx` - Add button command
-- `/lib/email-transform/nodes.tsx` - Add buttonBlock case
-- `/components/attributes-panel.tsx` - Add text/href inputs when blockType === 'buttonBlock'
-- `/components/email-extensions.ts` - Import and add EmailButton
+- `/components/email-slash-command.tsx` - Added button command
+- `/lib/email-transform/nodes.tsx` - Added buttonBlock transformer with alignment wrapper
+- `/components/attributes-panel.tsx` - Added button-specific fields + improved style override UX
+- `/components/email-extensions.ts` - Added EmailButton to extensions array
+- `/components/attributes-panel/style-dropdown-menu.tsx` - Added typography for buttons
+- `/lib/email-blocks.ts` - Added button default styles and merging
+- `/lib/email-transform/styles.ts` - Added button defaults and textDecoration support
+
+**Validated behavior**:
+
+- ✅ Button inserts correctly with default text and href
+- ✅ Button text/URL editable in attributes panel
+- ✅ Button inherits global button styles (background, text color, border radius, padding)
+- ✅ Typography controls work (text color, font size, font weight, line height, text decoration)
+- ✅ Alignment control works (left/center/right)
+- ✅ Button renders as styled button in email export (not plain link)
+- ✅ Button draggable and has attributes handle
+- ✅ Clicking button in editor doesn't navigate
+- ✅ Adding style override shows inherited value, doesn't create override until changed
+- ✅ Button styling matches editor view in email export (WYSIWYG)
 
 ---
 
-#### **Part 2: HTML Block** 🟡 MEDIUM
+#### **Part 2: HTML Block** 🟡 MEDIUM (NEXT)
 
 **Complexity**: Medium | **Estimated**: 3-4 hours | **Dependencies**: None
 
 **Why second?** Simple atom node, NodeView practice before complex blocks, useful utility block.
+
+**Status**: 📋 Ready to start after Phase 8.1 completion
 
 **Deliverables**:
 
@@ -3497,18 +3562,20 @@ Each email block requires **4 touchpoints**:
 
 ---
 
-### Phase 8 Summary
+### Phase 8 Progress Summary
 
 **Parts Breakdown**:
 
-1. 🟢 **Button Block** (Part 1) - 3-4 hours
-2. 🟡 **HTML Block** (Part 2) - 3-4 hours
+1. ✅ **Button Block** (Part 1) - COMPLETE (~4 hours actual)
+2. 📋 **HTML Block** (Part 2) - NEXT (3-4 hours estimated)
 3. 🟡 **Unsubscribe Footer** (Part 3) - 3-4 hours
 4. 🟡 **Social Links** (Part 4) - 4-5 hours (includes icon creation)
 5. 🔴 **Section Block** (Part 5) - 5-6 hours
 6. 🔴 **Multi-column** (Part 6) - DEFERRED
 
 **Total Estimate (Parts 1-5)**: 18-23 hours
+**Completed**: Part 1 (~4 hours)
+**Remaining**: Parts 2-5 (~14-19 hours)
 
 **Completion Order**:
 
@@ -3997,7 +4064,7 @@ Each email block requires **4 touchpoints**:
 - ✅ **Phase 5**: Block Attributes Panel v1 (Interactive Styling) - COMPLETE
 - ✅ **Phase 6**: Global Styles + Template Header UI - COMPLETE
 - ✅ **Phase 7**: React Email Transformer + Preview/Export - COMPLETE (Parts 1-5)
-- 📋 **Phase 8**: Email-Specific Block Nodes - NEXT
+- 🚧 **Phase 8**: Email-Specific Block Nodes - IN PROGRESS (Part 1 ✅, Part 2 📋 NEXT)
 - 📋 **Phase 7 Part 6**: Export Menu (optional enhancement)
 - 📋 **Phase 7 Part 7**: Email Client Testing (optional enhancement)
 - 📋 **Phase 9**: Variables System - PENDING
