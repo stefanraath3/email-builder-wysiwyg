@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   EmailTemplateProvider,
   useEmailTemplateContext,
@@ -8,10 +8,11 @@ import {
 import { EmailTemplateEditor } from "@/components/email-template-editor";
 import { GlobalStylesPanel } from "@/components/global-styles-panel";
 import { EmailTransformTestModal } from "@/components/email-transform-test-modal";
-import Menu from "@/components/ui/menu";
-import { Sliders } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sliders, Monitor, Moon, Sun } from "lucide-react";
 import { transformToReactEmail } from "@/lib/email-transform";
 import { render } from "@react-email/render";
+import { useTheme } from "next-themes";
 
 function TestTransformButton() {
   const { template } = useEmailTemplateContext();
@@ -52,6 +53,39 @@ function TestTransformButton() {
   );
 }
 
+function ThemeSwitcher() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cycleTheme = () => {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  };
+
+  const getIcon = () => {
+    if (!mounted) return <Monitor className="h-4 w-4" />;
+    if (theme === "light") return <Sun className="h-4 w-4" />;
+    if (theme === "dark") return <Moon className="h-4 w-4" />;
+    return <Monitor className="h-4 w-4" />;
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={cycleTheme}
+      title={mounted ? `Current theme: ${theme}` : "Theme"}
+    >
+      {getIcon()}
+    </Button>
+  );
+}
+
 export default function EmailEditorPage() {
   const [isStylesOpen, setIsStylesOpen] = useState(false);
 
@@ -63,28 +97,6 @@ export default function EmailEditorPage() {
           <div className="mx-auto max-w-7xl px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h1 className="text-lg font-medium">Email Template Editor</h1>
-                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                  Draft
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Test Transform now inside the same provider as the editor */}
-                <TestTransformButton />
-                <button
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-                  disabled
-                  title="Coming in Phase 7"
-                >
-                  Preview
-                </button>
-                <button
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-                  disabled
-                  title="Coming in Phase 7"
-                >
-                  Export
-                </button>
                 <button
                   className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                   onClick={() => setIsStylesOpen(true)}
@@ -93,6 +105,14 @@ export default function EmailEditorPage() {
                   <Sliders className="h-4 w-4" />
                   Styles
                 </button>
+                <div className="h-4 w-px bg-border" />
+                <h1 className="text-lg font-medium">Email Template Editor</h1>
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                  Draft
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <TestTransformButton />
                 <button
                   className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                   disabled
@@ -100,7 +120,7 @@ export default function EmailEditorPage() {
                 >
                   Publish
                 </button>
-                <Menu />
+                <ThemeSwitcher />
               </div>
             </div>
           </div>
