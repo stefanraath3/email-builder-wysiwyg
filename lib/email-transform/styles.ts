@@ -92,11 +92,21 @@ function convertToReactEmailCSS(styles: BlockStyles): React.CSSProperties {
     css.paddingLeft = `${styles.padding.left}px`;
   }
 
+  // Dimensions (for images)
+  if (styles.width) css.width = `${styles.width}px`;
+  if (styles.height && styles.height !== "auto") {
+    css.height = `${styles.height}px`;
+  } else if (styles.height === "auto") {
+    css.height = "auto";
+  }
+
   // Border
   if (styles.borderRadius !== undefined) {
     css.borderRadius = `${styles.borderRadius}px`;
   }
+  if (styles.borderWidth) css.borderWidth = `${styles.borderWidth}px`;
+  if (styles.borderStyle) css.borderStyle = styles.borderStyle;
+  if (styles.borderColor) css.borderColor = styles.borderColor;
 
   return css;
 }
-
