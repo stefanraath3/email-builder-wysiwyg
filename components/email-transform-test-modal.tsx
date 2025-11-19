@@ -32,7 +32,7 @@ export function EmailTransformTestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl h-[85vh] flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Email Transform Preview</DialogTitle>
         </DialogHeader>
@@ -70,14 +70,16 @@ export function EmailTransformTestModal({
 
           <TabsContent value="preview" className="flex-1 mt-0">
             <div className="h-full overflow-auto bg-muted/20 rounded-lg p-4">
-              <div className="mx-auto" style={{ maxWidth: "600px" }}>
-                <iframe
-                  srcDoc={html}
-                  className="w-full border-0 bg-white rounded"
-                  style={{ minHeight: "600px", height: "100%" }}
-                  title="Email Preview"
-                />
-              </div>
+              <iframe
+                srcDoc={html}
+                className="w-full border-0 bg-white rounded mx-auto"
+                style={{
+                  minHeight: "600px",
+                  maxWidth: "100%",
+                  display: "block",
+                }}
+                title="Email Preview"
+              />
             </div>
           </TabsContent>
 
@@ -93,4 +95,3 @@ export function EmailTransformTestModal({
     </Dialog>
   );
 }
-

@@ -94,28 +94,42 @@ export function EmailTemplateEditor() {
     };
   }, []);
 
-  // Apply global styles as CSS variables to editor wrapper and body content
+  // Apply global styles as CSS variables to editor wrapper and body content.
+  // NOTE:
+  // - On first mount after a full page reload, the EmailTemplate (with
+  //   persisted globalStyles) is available *before* the editor DOM (and
+  //   editorWrapperRef) is attached.
+  // - If we only depend on template.globalStyles here, the effect can run
+  //   once with a null ref and never re-run, so CSS variables are not
+  //   applied until the user changes a global style (which triggers a new
+  //   render and re-runs this effect).
+  // - That is exactly why the container background appears correct right
+  //   after editing, but is lost after a hard refresh until another change
+  //   is made.
+  //
+  // To fix this, we also depend on `isInitialized` so that we re-apply
+  // global styles after the editor DOM is ready on initial load.
   useEffect(() => {
-    if (template.globalStyles) {
-      // Apply to container wrapper
-      if (editorWrapperRef.current) {
-        applyGlobalStylesToElement(
-          editorWrapperRef.current,
-          template.globalStyles
-        );
-      }
+    if (!template.globalStyles || !isInitialized) return;
 
-      // Apply to body content (sibling element with class email-body-content)
-      if (typeof window !== "undefined") {
-        const bodyContent = document.querySelector(
-          ".email-body-content"
-        ) as HTMLElement;
-        if (bodyContent) {
-          applyGlobalStylesToElement(bodyContent, template.globalStyles);
-        }
+    // Apply to container wrapper (where the editor canvas lives)
+    if (editorWrapperRef.current) {
+      applyGlobalStylesToElement(
+        editorWrapperRef.current,
+        template.globalStyles
+      );
+    }
+
+    // Apply to body content (sibling element with class email-body-content)
+    if (typeof window !== "undefined") {
+      const bodyContent = document.querySelector(
+        ".email-body-content"
+      ) as HTMLElement | null;
+      if (bodyContent) {
+        applyGlobalStylesToElement(bodyContent, template.globalStyles);
       }
     }
-  }, [template.globalStyles]);
+  }, [template.globalStyles, isInitialized]);
 
   // Dev helper: expose editor and helper functions to window for testing
   useEffect(() => {
