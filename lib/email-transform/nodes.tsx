@@ -196,6 +196,23 @@ function transformNode(
         </div>
       );
 
+    case "unsubscribeFooterBlock":
+      const footerStyles: React.CSSProperties = {
+        ...getNodeStyles(node, globalStyles, "unsubscribeFooterBlock"),
+        fontSize: "12px",
+        color: "#666666",
+        textAlign: "center",
+        paddingTop: "16px",
+        paddingBottom: "16px",
+        borderTop: "1px solid #eeeeee",
+        marginTop: "32px",
+      };
+      return (
+        <Text key={key} style={footerStyles}>
+          {transformInlineContent(node.content, globalStyles)}
+        </Text>
+      );
+
     default:
       console.warn("Unsupported node type:", node.type);
       return null;

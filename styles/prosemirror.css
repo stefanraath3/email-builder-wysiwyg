@@ -590,3 +590,13 @@ div[data-type="button-block"] > a {
   cursor: pointer;
   pointer-events: none; /* Prevent navigation in editor */
 }
+
+/* Unsubscribe footer block styling */
+.unsubscribe-footer {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  padding: 16px 0;
+  border-top: 1px solid #eee;
+  margin-top: 32px;
+}

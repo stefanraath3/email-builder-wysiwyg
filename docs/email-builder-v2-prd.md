@@ -2968,9 +2968,9 @@ Each email block requires **4 touchpoints**:
 
 ---
 
-#### **Part 3: Unsubscribe Footer Block** 🟡 MEDIUM
+#### **Part 3: Unsubscribe Footer Block** ✅ COMPLETE
 
-**Complexity**: Medium | **Estimated**: 3-4 hours | **Dependencies**: None
+**Complexity**: Medium | **Actual Time**: ~3 hours | **Dependencies**: None
 
 **Why third?** Simple content block with default template, good for practicing text + variable pattern.
 
@@ -3103,22 +3103,60 @@ Each email block requires **4 touchpoints**:
 - ✅ Link in footer works (marks with href)
 - ✅ Exports with proper styling
 
-**Files to create**:
+**What was built**:
+
+1. ✅ Created `/lib/extensions/email-unsubscribe-footer.ts`:
+   - Content node (not atom) with `content: "inline*"` for rich text editing
+   - Default template with unsubscribe text and link to `{{unsubscribe_url}}`
+   - TypeScript command declaration for proper type safety
+   - Styles attribute for customization
+
+2. ✅ Updated `/components/email-slash-command.tsx`:
+   - Added Unsubscribe Footer command to LAYOUT category
+   - Icon: UserMinus
+
+3. ✅ Updated `/components/email-extensions.ts`:
+   - Imported and added EmailUnsubscribeFooter to extensions
+   - Added to UniqueID types and GlobalDragHandle customNodes
+
+4. ✅ Updated `/lib/email-transform/nodes.tsx`:
+   - Added `unsubscribeFooterBlock` transformer case
+   - Hard-coded footer styles (12px, #666, centered, top border)
+   - Uses `transformInlineContent()` for link handling
+
+5. ✅ Updated `/styles/prosemirror.css`:
+   - Added `.unsubscribe-footer` CSS class
+   - Matches email export styling
+
+**Files created (1)**:
 
 - `/lib/extensions/email-unsubscribe-footer.ts` - Extension
 
-**Files to modify**:
+**Files modified (4)**:
 
-- `/components/email-slash-command.tsx` - Add unsubscribe footer command
-- `/lib/email-transform/nodes.tsx` - Add unsubscribeFooterBlock case
-- `/styles/prosemirror.css` - Add footer styling
-- `/components/email-extensions.ts` - Add EmailUnsubscribeFooter
+- `/components/email-slash-command.tsx` - Added unsubscribe footer command
+- `/lib/email-transform/nodes.tsx` - Added unsubscribeFooterBlock case
+- `/styles/prosemirror.css` - Added footer styling
+- `/components/email-extensions.ts` - Added EmailUnsubscribeFooter
+
+**Validated behavior**:
+
+- ✅ Footer inserts correctly with default template
+- ✅ Text is fully editable inline
+- ✅ Unsubscribe link editable via bubble menu
+- ✅ Footer styled distinctly (small, gray, centered, top border)
+- ✅ Exports to React Email `<Text>` with proper styling
+- ✅ Footer is draggable and has attributes handle
+- ✅ Style overrides work via attributes panel
+- ✅ `{{unsubscribe_url}}` variable placeholder preserved
 
 ---
 
-#### **Part 4: Social Links Block** 🟡 MEDIUM
+#### **Part 4: Social Links Block** 🟡 MEDIUM (NEXT)
 
-**Complexity**: Medium | **Estimated**: 4-5 hours | **Dependencies**: None, but need icon assets
+**Status**: 📋 Ready to start after Phase 8.3 completion
+
+**Complexity**: Medium | **Estimated**: 4-5 hours | **Dependencies**: Need to create icon assets
 
 **Why fourth?** Requires managing array of links + icon rendering with raster images (email-safe).
 
@@ -3567,19 +3605,19 @@ Each email block requires **4 touchpoints**:
 **Parts Breakdown**:
 
 1. ✅ **Button Block** (Part 1) - COMPLETE (~4 hours actual)
-2. 📋 **HTML Block** (Part 2) - NEXT (3-4 hours estimated)
-3. 🟡 **Unsubscribe Footer** (Part 3) - 3-4 hours
-4. 🟡 **Social Links** (Part 4) - 4-5 hours (includes icon creation)
+2. 📋 **HTML Block** (Part 2) - DEFERRED (3-4 hours estimated)
+3. ✅ **Unsubscribe Footer** (Part 3) - COMPLETE (~3 hours actual)
+4. 📋 **Social Links** (Part 4) - NEXT (4-5 hours estimated)
 5. 🔴 **Section Block** (Part 5) - 5-6 hours
 6. 🔴 **Multi-column** (Part 6) - DEFERRED
 
-**Total Estimate (Parts 1-5)**: 18-23 hours
-**Completed**: Part 1 (~4 hours)
-**Remaining**: Parts 2-5 (~14-19 hours)
+**Total Estimate (Parts 1,3,4,5)**: 16-19 hours
+**Completed**: Parts 1 & 3 (~7 hours)
+**Remaining**: Parts 4-5 (~9-11 hours)
 
 **Completion Order**:
 
-1. Button → 2. HTML → 3. Unsubscribe Footer → 4. Social Links → 5. Section
+1. Button ✅ → 2. HTML (deferred) → 3. Unsubscribe Footer ✅ → 4. Social Links (next) → 5. Section
 
 **Dependencies**:
 
@@ -4064,7 +4102,7 @@ Each email block requires **4 touchpoints**:
 - ✅ **Phase 5**: Block Attributes Panel v1 (Interactive Styling) - COMPLETE
 - ✅ **Phase 6**: Global Styles + Template Header UI - COMPLETE
 - ✅ **Phase 7**: React Email Transformer + Preview/Export - COMPLETE (Parts 1-5)
-- 🚧 **Phase 8**: Email-Specific Block Nodes - IN PROGRESS (Part 1 ✅, Part 2 📋 NEXT)
+- 🚧 **Phase 8**: Email-Specific Block Nodes - IN PROGRESS (Parts 1✅, 3✅, Part 4 📋 NEXT)
 - 📋 **Phase 7 Part 6**: Export Menu (optional enhancement)
 - 📋 **Phase 7 Part 7**: Email Client Testing (optional enhancement)
 - 📋 **Phase 9**: Variables System - PENDING

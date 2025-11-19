@@ -250,7 +250,14 @@ export const emailSuggestionItems = createSuggestionItems([
     description: "Add a horizontal divider.",
     searchTerms: ["hr", "separator", "line"],
     icon: <Minus size={18} />,
-    command: createPlaceholderCommand("Divider Block"),
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setHorizontalRule()
+        .run();
+    },
   },
   {
     title: "Section",
@@ -268,10 +275,17 @@ export const emailSuggestionItems = createSuggestionItems([
   },
   {
     title: "Unsubscribe Footer",
-    description: "Add unsubscribe footer.",
-    searchTerms: ["unsubscribe", "footer"],
+    description: "Add unsubscribe footer with link.",
+    searchTerms: ["unsubscribe", "footer", "opt-out"],
     icon: <UserMinus size={18} />,
-    command: createPlaceholderCommand("Unsubscribe Footer Block"),
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertUnsubscribeFooter()
+        .run();
+    },
   },
 
   // UTILITY category (placeholders)
