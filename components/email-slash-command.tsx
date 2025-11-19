@@ -251,12 +251,7 @@ export const emailSuggestionItems = createSuggestionItems([
     searchTerms: ["hr", "separator", "line"],
     icon: <Minus size={18} />,
     command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setHorizontalRule()
-        .run();
+      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },
   },
   {
@@ -268,10 +263,31 @@ export const emailSuggestionItems = createSuggestionItems([
   },
   {
     title: "Social Links",
-    description: "Add social media links.",
-    searchTerms: ["social", "icons", "links"],
+    description: "Add social media links with icons.",
+    searchTerms: [
+      "social",
+      "icons",
+      "links",
+      "twitter",
+      "facebook",
+      "linkedin",
+    ],
     icon: <Share2 size={18} />,
-    command: createPlaceholderCommand("Social Links Block"),
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+
+      // Emit custom event to open modal
+      window.dispatchEvent(
+        new CustomEvent("emailEditor:openSocialLinksModal", {
+          detail: {
+            currentLinks: [],
+            callback: (links: any[]) => {
+              editor.chain().focus().insertSocialLinks({ links }).run();
+            },
+          },
+        })
+      );
+    },
   },
   {
     title: "Unsubscribe Footer",
@@ -279,12 +295,7 @@ export const emailSuggestionItems = createSuggestionItems([
     searchTerms: ["unsubscribe", "footer", "opt-out"],
     icon: <UserMinus size={18} />,
     command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertUnsubscribeFooter()
-        .run();
+      editor.chain().focus().deleteRange(range).insertUnsubscribeFooter().run();
     },
   },
 

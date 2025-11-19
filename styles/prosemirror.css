@@ -600,3 +600,56 @@ div[data-type="button-block"] > a {
   border-top: 1px solid #eee;
   margin-top: 32px;
 }
+
+/* Social links block styling */
+.social-links-block {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  justify-content: center; /* default alignment */
+  position: relative;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.social-links-block:hover {
+  opacity: 0.8;
+}
+
+.social-links-block img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.social-links-block img:hover {
+  transform: scale(1.05);
+}
+
+.social-links-edit-popup {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  white-space: nowrap;
+}
+
+.social-links-edit-popup button {
+  background: none;
+  border: none;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.social-links-edit-popup button:hover {
+  color: hsl(var(--primary));
+}

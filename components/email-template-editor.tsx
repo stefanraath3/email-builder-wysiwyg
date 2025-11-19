@@ -46,6 +46,8 @@ import {
   DEFAULT_CONTAINER_WIDTH,
   DEFAULT_PADDING,
 } from "@/lib/email-template-defaults";
+import { SocialLinksConfigModal } from "./social-links-config-modal";
+import type { SocialLink } from "@/lib/extensions/email-social-links";
 
 const extensions = [...emailExtensions, emailSlashCommand];
 
@@ -64,6 +66,11 @@ export function EmailTemplateEditor() {
   const [openLink, setOpenLink] = useState(false);
   const [openAI, setOpenAI] = useState(false);
   const [isAttributesOpen, setIsAttributesOpen] = useState(false);
+  const [socialLinksModalOpen, setSocialLinksModalOpen] = useState(false);
+  const [socialLinksModalData, setSocialLinksModalData] = useState<{
+    currentLinks: SocialLink[];
+    callback: (links: SocialLink[]) => void;
+  } | null>(null);
   const { editor } = useEditor();
   const editorWrapperRef = useRef<HTMLDivElement>(null);
   const bodyWrapperRef = useRef<HTMLDivElement>(null);
@@ -90,6 +97,32 @@ export function EmailTemplateEditor() {
       window.removeEventListener(
         "emailEditor:openAttributes",
         handleOpenAttributes
+      );
+    };
+  }, []);
+
+  // Listen for social links modal open event
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleOpenSocialLinksModal = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        currentLinks: SocialLink[];
+        callback: (links: SocialLink[]) => void;
+      }>;
+      setSocialLinksModalData(customEvent.detail);
+      setSocialLinksModalOpen(true);
+    };
+
+    window.addEventListener(
+      "emailEditor:openSocialLinksModal",
+      handleOpenSocialLinksModal
+    );
+
+    return () => {
+      window.removeEventListener(
+        "emailEditor:openSocialLinksModal",
+        handleOpenSocialLinksModal
       );
     };
   }, []);
@@ -319,6 +352,19 @@ export function EmailTemplateEditor() {
       <div className="mx-auto max-w-7xl px-6 py-4">
         <EmailTemplateDebugPanel />
       </div>
+
+      {/* Social Links Configuration Modal */}
+      {socialLinksModalData && (
+        <SocialLinksConfigModal
+          open={socialLinksModalOpen}
+          onOpenChange={setSocialLinksModalOpen}
+          initialLinks={socialLinksModalData.currentLinks}
+          onSave={(links) => {
+            socialLinksModalData.callback(links);
+            setSocialLinksModalData(null);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -246,50 +246,62 @@ export function AttributesPanel({
                 />
               </div>
 
-              <Separator />
-
-              {/* Styles Section with Dropdown */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Styles</Label>
-                  <StyleDropdownMenu
-                    activeStyles={activeStyleKeys}
-                    onAddStyle={handleAddStyle}
-                    blockType={blockType}
-                  />
+              {/* Special note for social links block */}
+              {blockType === "socialLinksBlock" && (
+                <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md">
+                  Click the social links block in the editor to configure your
+                  social media links
                 </div>
-
-                {/* Active Style Controls */}
-                {activeStyleKeys.size === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    No style overrides
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {Array.from(activeStyleKeys).map((styleKey) => (
-                      <StyleControl
-                        key={styleKey}
-                        styleKey={styleKey}
-                        styles={styles}
-                        onChange={updateStyle}
-                        onRemove={() => handleRemoveStyle(styleKey)}
-                        inheritedDefault={inheritedDefaults[styleKey]}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
 
               <Separator />
 
-              {/* Reset Button */}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={resetStyles}
-              >
-                Reset to Defaults
-              </Button>
+              {/* Styles Section with Dropdown - Hide for socialLinksBlock */}
+              {blockType !== "socialLinksBlock" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Styles</Label>
+                    <StyleDropdownMenu
+                      activeStyles={activeStyleKeys}
+                      onAddStyle={handleAddStyle}
+                      blockType={blockType}
+                    />
+                  </div>
+
+                  {/* Active Style Controls */}
+                  {activeStyleKeys.size === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      No style overrides
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {Array.from(activeStyleKeys).map((styleKey) => (
+                        <StyleControl
+                          key={styleKey}
+                          styleKey={styleKey}
+                          styles={styles}
+                          onChange={updateStyle}
+                          onRemove={() => handleRemoveStyle(styleKey)}
+                          inheritedDefault={inheritedDefaults[styleKey]}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Reset Button - Hide for socialLinksBlock */}
+              {blockType !== "socialLinksBlock" && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={resetStyles}
+                >
+                  Reset to Defaults
+                </Button>
+              )}
             </>
           )}
         </div>

@@ -30,6 +30,7 @@ import { EmailBlockquote } from "@/lib/extensions/email-blockquote";
 import { EmailCodeBlock } from "@/lib/extensions/email-code-block";
 import { EmailImage } from "@/lib/extensions/email-image";
 import { EmailButton } from "@/lib/extensions/email-button";
+import { EmailSocialLinks } from "@/lib/extensions/email-social-links";
 import { EmailUnsubscribeFooter } from "@/lib/extensions/email-unsubscribe-footer";
 import {
   EmailBulletList,
@@ -185,6 +186,7 @@ const uniqueId = UniqueID.configure({
     "youtube",
     "twitter",
     "buttonBlock",
+    "socialLinksBlock",
     "unsubscribeFooterBlock",
     "horizontalRule",
   ],
@@ -206,6 +208,7 @@ export const emailExtensions = [
   emailListItem,
   EmailImage,
   EmailButton,
+  EmailSocialLinks,
   EmailUnsubscribeFooter,
   uniqueId,
   placeholder,
@@ -234,6 +237,7 @@ export const emailExtensions = [
       "twitter",
       "image",
       "buttonBlock",
+      "socialLinksBlock",
       "unsubscribeFooterBlock",
       // Add other email-specific block types here as they're implemented
     ],

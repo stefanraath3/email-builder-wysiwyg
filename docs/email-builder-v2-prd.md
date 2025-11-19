@@ -3152,6 +3152,115 @@ Each email block requires **4 touchpoints**:
 
 ---
 
+#### **Part 4: Social Links Block** ✅ COMPLETE
+
+**Complexity**: Medium | **Actual Time**: ~4 hours | **Dependencies**: Need social icon assets
+
+**Why fourth?** Requires managing array of links + icon rendering with raster images (email-safe).
+
+**What Was Built**:
+
+1. **TipTap Extension** (`/lib/extensions/email-social-links.ts`):
+   - Atom node with `links` array and `styles` attributes
+   - Each link: `{ platform: "linkedin" | "facebook" | "x" | "youtube", url: string }`
+   - ReactNodeViewRenderer for custom rendering
+   - `insertSocialLinks(options)` command
+
+2. **NodeView Component** (`/components/node-views/social-links-view.tsx`):
+   - Displays icons in horizontal row (flexbox)
+   - Fixed platform order: LinkedIn → Facebook → X → YouTube
+   - 48px circular icons with 16px gap
+   - Click handler shows edit popup overlay
+   - Edit popup emits custom event to open configuration modal
+   - Alignment support (left/center/right via styles)
+
+3. **Configuration Modal** (`/components/social-links-config-modal.tsx`):
+   - Platform dropdown + URL input + "Add" button
+   - List of added links with icon + URL + delete button
+   - "Save" (Cmd+Enter) and "Cancel" (Esc) buttons
+   - Validation: prevents duplicate platforms
+   - Opens on `/social` command and on edit click
+
+4. **Email Template Editor Integration** (`/components/email-template-editor.tsx`):
+   - Added `socialLinksModalOpen` state
+   - Added `socialLinksModalData` state for callback
+   - Window event listener for `emailEditor:openSocialLinksModal`
+   - Renders `<SocialLinksConfigModal>` component
+
+5. **Slash Command** (`/components/email-slash-command.tsx`):
+   - "Social Links" command in LAYOUT category
+   - Opens modal immediately (doesn't insert block first)
+   - Modal callback inserts block with configured links
+
+6. **Email Transformer** (`/lib/email-transform/nodes.tsx`):
+   - Added `socialLinksBlock` case
+   - Fixed platform order: LinkedIn → Facebook → X → YouTube
+   - Maps to horizontal row of React Email `<Link>` + `<Img>` components
+   - 48px circular icons with 8px spacing
+   - Alignment wrapper (left/center/right)
+   - Skips rendering if no links configured
+
+7. **Email Extensions** (`/components/email-extensions.ts`):
+   - Imported `EmailSocialLinks` extension
+   - Added to `emailExtensions` array
+   - Added `socialLinksBlock` to UniqueID types
+   - Added `socialLinksBlock` to GlobalDragHandle customNodes
+
+8. **CSS Styling** (`/styles/prosemirror.css`):
+   - `.social-links-block` flexbox layout with gap
+   - Circular 48px icons with hover effects
+   - `.social-links-edit-popup` positioned overlay
+   - Hover opacity and transform transitions
+
+9. **Attributes Panel** (`/components/attributes-panel.tsx`):
+   - Special handling for `socialLinksBlock`
+   - Shows only Alignment control (left/center/right)
+   - Hides Styles section (not applicable)
+   - Shows helper text: "Click the social links block in the editor to configure your social media links"
+   - No Reset button (only alignment can be changed)
+
+**Validated Behavior**:
+
+- ✅ Insert social links via `/social` → Modal opens immediately
+- ✅ Configure multiple platforms with URLs in modal
+- ✅ Save inserts block with configured links
+- ✅ Icons render in fixed order (LinkedIn → Facebook → X → YouTube)
+- ✅ Clicking block shows edit popup
+- ✅ Edit button reopens modal with current configuration
+- ✅ Can add/remove platforms in edit mode
+- ✅ Icons are circular and properly spaced
+- ✅ Alignment control works (left/center/right)
+- ✅ Block is draggable and has attributes handle
+- ✅ Exports to React Email with clickable icon links
+- ✅ Only configured platforms appear in output
+- ✅ No linter errors
+- ✅ Icons use existing PNG assets from `/public/social-links/`
+
+**Files Created (3)**:
+
+- `/lib/extensions/email-social-links.ts` - TipTap extension
+- `/components/node-views/social-links-view.tsx` - NodeView component
+- `/components/social-links-config-modal.tsx` - Configuration modal
+
+**Files Modified (6)**:
+
+- `/components/email-template-editor.tsx` - Added modal state and event listener
+- `/components/email-slash-command.tsx` - Added Social Links command
+- `/lib/email-transform/nodes.tsx` - Added socialLinksBlock transformer
+- `/components/email-extensions.ts` - Added EmailSocialLinks extension
+- `/styles/prosemirror.css` - Added social links CSS
+- `/components/attributes-panel.tsx` - Added socialLinksBlock special handling
+
+**Technical Implementation**:
+
+- **Modal Event System**: Uses window.dispatchEvent with CustomEvent to bridge slash command → React modal
+- **Edit Flow**: Click block → Popup appears → Click Edit → Modal opens with current links → Save updates block
+- **Platform Mapping**: Fixed order enforced in both NodeView and transformer for consistency
+- **Email-Safe**: Raster PNG images (not SVG), inline-block layout, explicit dimensions
+- **Type Safety**: Full TypeScript types for SocialLink and proper NodeViewProps usage
+
+---
+
 #### **Part 4: Social Links Block** 🟡 MEDIUM (NEXT)
 
 **Status**: 📋 Ready to start after Phase 8.3 completion
@@ -3607,17 +3716,17 @@ Each email block requires **4 touchpoints**:
 1. ✅ **Button Block** (Part 1) - COMPLETE (~4 hours actual)
 2. 📋 **HTML Block** (Part 2) - DEFERRED (3-4 hours estimated)
 3. ✅ **Unsubscribe Footer** (Part 3) - COMPLETE (~3 hours actual)
-4. 📋 **Social Links** (Part 4) - NEXT (4-5 hours estimated)
-5. 🔴 **Section Block** (Part 5) - 5-6 hours
+4. ✅ **Social Links** (Part 4) - COMPLETE (~4 hours actual)
+5. 🔴 **Section Block** (Part 5) - NEXT (5-6 hours estimated)
 6. 🔴 **Multi-column** (Part 6) - DEFERRED
 
 **Total Estimate (Parts 1,3,4,5)**: 16-19 hours
-**Completed**: Parts 1 & 3 (~7 hours)
-**Remaining**: Parts 4-5 (~9-11 hours)
+**Completed**: Parts 1, 3 & 4 (~11 hours)
+**Remaining**: Part 5 (~5-6 hours)
 
 **Completion Order**:
 
-1. Button ✅ → 2. HTML (deferred) → 3. Unsubscribe Footer ✅ → 4. Social Links (next) → 5. Section
+1. Button ✅ → 2. HTML (deferred) → 3. Unsubscribe Footer ✅ → 4. Social Links ✅ → 5. Section (next)
 
 **Dependencies**:
 
@@ -4102,7 +4211,7 @@ Each email block requires **4 touchpoints**:
 - ✅ **Phase 5**: Block Attributes Panel v1 (Interactive Styling) - COMPLETE
 - ✅ **Phase 6**: Global Styles + Template Header UI - COMPLETE
 - ✅ **Phase 7**: React Email Transformer + Preview/Export - COMPLETE (Parts 1-5)
-- 🚧 **Phase 8**: Email-Specific Block Nodes - IN PROGRESS (Parts 1✅, 3✅, Part 4 📋 NEXT)
+- 🚧 **Phase 8**: Email-Specific Block Nodes - IN PROGRESS (Parts 1✅, 3✅, 4✅, Part 5 📋 NEXT)
 - 📋 **Phase 7 Part 6**: Export Menu (optional enhancement)
 - 📋 **Phase 7 Part 7**: Email Client Testing (optional enhancement)
 - 📋 **Phase 9**: Variables System - PENDING

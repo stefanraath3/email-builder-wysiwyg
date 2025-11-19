@@ -213,6 +213,53 @@ function transformNode(
         </Text>
       );
 
+    case "socialLinksBlock":
+      const PLATFORM_ORDER = ["linkedin", "facebook", "x", "youtube"] as const;
+      const PLATFORM_ICONS: Record<string, string> = {
+        linkedin: "/social-links/social-linkedin.png",
+        facebook: "/social-links/social-facebook.png",
+        x: "/social-links/social-x.png",
+        youtube: "/social-links/social-youtube.png",
+      };
+
+      const links = node.attrs?.links || [];
+      if (links.length === 0) return null;
+
+      // Filter and order links based on platform order
+      const orderedLinks = PLATFORM_ORDER.map((platform) =>
+        links.find((link: any) => link.platform === platform)
+      ).filter(Boolean) as Array<{ platform: string; url: string }>;
+
+      // Get alignment from styles (default center)
+      const socialAlignment = node.attrs?.styles?.textAlign || "center";
+      const socialWrapperStyle: React.CSSProperties = {
+        textAlign: socialAlignment as React.CSSProperties["textAlign"],
+        margin: "16px 0",
+      };
+
+      return (
+        <div key={key} style={socialWrapperStyle}>
+          {orderedLinks.map((link, i) => (
+            <Link
+              key={link.platform}
+              href={link.url}
+              style={{ display: "inline-block" }}
+            >
+              <Img
+                src={PLATFORM_ICONS[link.platform]}
+                alt={link.platform}
+                width={48}
+                height={48}
+                style={{
+                  borderRadius: "50%",
+                  marginRight: i === orderedLinks.length - 1 ? "0" : "8px",
+                }}
+              />
+            </Link>
+          ))}
+        </div>
+      );
+
     default:
       console.warn("Unsupported node type:", node.type);
       return null;
