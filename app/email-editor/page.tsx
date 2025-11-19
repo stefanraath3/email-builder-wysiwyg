@@ -1,8 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import { EmailTemplateProvider } from "@/lib/email-template-context";
 import { EmailTemplateEditor } from "@/components/email-template-editor";
+import { GlobalStylesPanel } from "@/components/global-styles-panel";
 import Menu from "@/components/ui/menu";
+import { Sliders } from "lucide-react";
 
 export default function EmailEditorPage() {
+  const [isStylesOpen, setIsStylesOpen] = useState(false);
+
   return (
     <div className="min-h-screen">
       {/* Top Bar */}
@@ -32,10 +39,11 @@ export default function EmailEditorPage() {
                 Export
               </button>
               <button
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-                disabled
-                title="Coming in Phase 6"
+                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                onClick={() => setIsStylesOpen(true)}
+                title="Global Styles"
               >
+                <Sliders className="h-4 w-4" />
                 Styles
               </button>
               <button
@@ -56,6 +64,10 @@ export default function EmailEditorPage() {
         <div className="mx-auto" style={{ width: "600px" }}>
           <EmailTemplateProvider>
             <EmailTemplateEditor />
+            <GlobalStylesPanel
+              open={isStylesOpen}
+              onOpenChange={setIsStylesOpen}
+            />
           </EmailTemplateProvider>
         </div>
       </div>

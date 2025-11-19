@@ -247,8 +247,14 @@ export function mergeWithGlobalStyles(
 ): BlockStyles {
   const merged: BlockStyles = { ...blockStyles };
 
-  // Apply global defaults only if block doesn't have custom value
-  if (blockType === "paragraph" || blockType === "heading") {
+  // Text blocks (paragraph, heading, blockquote, lists) inherit typography
+  if (
+    blockType === "paragraph" ||
+    blockType === "heading" ||
+    blockType === "blockquote" ||
+    blockType === "bulletList" ||
+    blockType === "orderedList"
+  ) {
     if (!merged.textColor && globalStyles.typography.color) {
       merged.textColor = globalStyles.typography.color;
     }
@@ -263,6 +269,7 @@ export function mergeWithGlobalStyles(
     }
   }
 
+  // Images inherit image-specific defaults
   if (blockType === "image") {
     if (
       merged.borderRadius === undefined &&
@@ -272,6 +279,7 @@ export function mergeWithGlobalStyles(
     }
   }
 
+  // Code blocks inherit code block defaults
   if (blockType === "codeBlock") {
     if (!merged.backgroundColor && globalStyles.codeBlock.backgroundColor) {
       merged.backgroundColor = globalStyles.codeBlock.backgroundColor;
@@ -284,6 +292,13 @@ export function mergeWithGlobalStyles(
     }
     if (merged.padding === undefined && globalStyles.codeBlock.padding) {
       merged.padding = globalStyles.codeBlock.padding;
+    }
+    // Code blocks also inherit typography for text color
+    if (!merged.textColor && globalStyles.typography.color) {
+      merged.textColor = globalStyles.typography.color;
+    }
+    if (!merged.fontFamily && globalStyles.typography.fontFamily) {
+      merged.fontFamily = globalStyles.typography.fontFamily;
     }
   }
 
@@ -300,21 +315,32 @@ export function getDefaultStylesForBlockType(
 ): Partial<BlockStyles> {
   const defaults: Partial<BlockStyles> = {};
 
-  if (blockType === "paragraph" || blockType === "heading") {
+  // Text blocks inherit typography defaults
+  if (
+    blockType === "paragraph" ||
+    blockType === "heading" ||
+    blockType === "blockquote" ||
+    blockType === "bulletList" ||
+    blockType === "orderedList"
+  ) {
     defaults.textColor = globalStyles.typography.color;
     defaults.fontSize = globalStyles.typography.fontSize;
     defaults.lineHeight = globalStyles.typography.lineHeight;
     defaults.fontFamily = globalStyles.typography.fontFamily;
   }
 
+  // Images inherit image-specific defaults
   if (blockType === "image") {
     defaults.borderRadius = globalStyles.image.borderRadius;
   }
 
+  // Code blocks inherit code block defaults + typography
   if (blockType === "codeBlock") {
     defaults.backgroundColor = globalStyles.codeBlock.backgroundColor;
     defaults.borderRadius = globalStyles.codeBlock.borderRadius;
     defaults.padding = globalStyles.codeBlock.padding;
+    defaults.textColor = globalStyles.typography.color;
+    defaults.fontFamily = globalStyles.typography.fontFamily;
   }
 
   return defaults;

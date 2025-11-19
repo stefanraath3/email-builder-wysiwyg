@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   EditorCommand,
   EditorCommandEmpty,
@@ -37,6 +37,15 @@ import {
 import { useActiveBlock } from "@/hooks/use-active-block";
 import { AttributesPanel } from "./attributes-panel";
 import { ActiveBlockTestPanel } from "./active-block-test-panel";
+import {
+  applyGlobalStylesToElement,
+  getContainerAlignmentClass,
+} from "@/lib/global-styles-css";
+import { cn } from "@/lib/utils";
+import {
+  DEFAULT_CONTAINER_WIDTH,
+  DEFAULT_PADDING,
+} from "@/lib/email-template-defaults";
 
 const extensions = [...emailExtensions, emailSlashCommand];
 
@@ -56,6 +65,7 @@ export function EmailTemplateEditor() {
   const [openAI, setOpenAI] = useState(false);
   const [isAttributesOpen, setIsAttributesOpen] = useState(false);
   const { editor } = useEditor();
+  const editorWrapperRef = useRef<HTMLDivElement>(null);
 
   // Initialize content from template (only once)
   useEffect(() => {
@@ -82,6 +92,16 @@ export function EmailTemplateEditor() {
       );
     };
   }, []);
+
+  // Apply global styles as CSS variables to editor wrapper
+  useEffect(() => {
+    if (editorWrapperRef.current && template.globalStyles) {
+      applyGlobalStylesToElement(
+        editorWrapperRef.current,
+        template.globalStyles
+      );
+    }
+  }, [template.globalStyles]);
 
   // Dev helper: expose editor and helper functions to window for testing
   useEffect(() => {
@@ -123,12 +143,41 @@ export function EmailTemplateEditor() {
       <TemplateHeader />
 
       {/* Editor Canvas */}
-      <div className="editor-canvas mt-6">
+      <div
+        ref={editorWrapperRef}
+        className="editor-canvas mt-6"
+        style={{
+          width: `${
+            template.globalStyles?.container?.width ?? DEFAULT_CONTAINER_WIDTH
+          }px`,
+          paddingTop: `${
+            template.globalStyles?.container?.padding?.top ??
+            DEFAULT_PADDING.top
+          }px`,
+          paddingRight: `${
+            template.globalStyles?.container?.padding?.right ??
+            DEFAULT_PADDING.right
+          }px`,
+          paddingBottom: `${
+            template.globalStyles?.container?.padding?.bottom ??
+            DEFAULT_PADDING.bottom
+          }px`,
+          paddingLeft: `${
+            template.globalStyles?.container?.padding?.left ??
+            DEFAULT_PADDING.left
+          }px`,
+        }}
+      >
         <EditorRoot>
           <EditorContent
             initialContent={initialContent}
             extensions={extensions}
-            className="relative min-h-[500px] w-full border-muted bg-background sm:rounded-lg sm:border sm:shadow-lg"
+            className={cn(
+              "relative min-h-[500px] w-full border-muted bg-background sm:rounded-lg sm:border sm:shadow-lg",
+              getContainerAlignmentClass(
+                template.globalStyles?.container?.align ?? "center"
+              )
+            )}
             editorProps={{
               handleDOMEvents: {
                 keydown: (_view, event) => handleCommandNavigation(event),

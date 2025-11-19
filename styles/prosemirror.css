@@ -2,7 +2,14 @@
   padding: 3rem;
   padding-left: 2rem;
   padding-right: 2rem;
-  color: hsl(var(--foreground));
+  /* Use CSS variables from global styles, fallback to theme colors */
+  color: var(--email-text-color, hsl(var(--foreground)));
+  font-family: var(
+    --email-font-family,
+    var(--font-default, system-ui, sans-serif)
+  );
+  font-size: var(--email-font-size, 1rem);
+  line-height: var(--email-line-height, 1.5);
 }
 
 @media (min-width: 640px) {
@@ -19,7 +26,12 @@
 .ProseMirror h4,
 .ProseMirror h5,
 .ProseMirror h6 {
-  color: hsl(var(--foreground));
+  color: var(--email-text-color, hsl(var(--foreground)));
+  font-family: var(
+    --email-font-family,
+    var(--font-default, system-ui, sans-serif)
+  );
+  line-height: var(--email-line-height, 1.5);
 }
 
 .ProseMirror strong,
@@ -30,13 +42,19 @@
 .ProseMirror p,
 .ProseMirror li,
 .ProseMirror blockquote {
-  color: hsl(var(--foreground));
+  color: var(--email-text-color, hsl(var(--foreground)));
+  font-family: var(
+    --email-font-family,
+    var(--font-default, system-ui, sans-serif)
+  );
+  font-size: var(--email-font-size, 1rem);
+  line-height: var(--email-line-height, 1.5);
 }
 
 /* Link styling - matches TiptapLink extension configuration */
 .ProseMirror a {
-  color: hsl(var(--muted-foreground));
-  text-decoration: underline;
+  color: var(--email-link-color, hsl(var(--muted-foreground)));
+  text-decoration: var(--email-link-decoration, underline);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   transition: color 0.15s ease;
@@ -254,10 +272,10 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 
 /* Fix code block rendering */
 .ProseMirror code {
-  background-color: hsl(var(--muted));
-  color: hsl(var(--foreground));
+  background-color: var(--email-inline-code-bg, hsl(var(--muted)));
+  color: var(--email-inline-code-text, hsl(var(--foreground)));
   padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
+  border-radius: var(--email-inline-code-radius, 0.25rem);
   font-size: 0.875em;
   font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
@@ -265,10 +283,13 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 }
 
 .ProseMirror pre {
-  background-color: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  background-color: var(--email-code-block-bg, hsl(var(--muted)));
+  color: var(--email-text-color, hsl(var(--foreground)));
+  border-radius: var(--email-code-block-radius, 0.5rem);
+  padding: var(--email-code-block-padding-top, 0.75rem)
+    var(--email-code-block-padding-right, 1rem)
+    var(--email-code-block-padding-bottom, 0.75rem)
+    var(--email-code-block-padding-left, 1rem);
   overflow-x: auto;
   margin-top: 1.25em;
   margin-bottom: 1.25em;
