@@ -14,6 +14,7 @@ import { Sliders, Monitor, Moon, Sun } from "lucide-react";
 import { transformToReactEmail } from "@/lib/email-transform";
 import { render } from "@react-email/render";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 function TestTransformButton() {
   const { template } = useEmailTemplateContext();
@@ -91,60 +92,109 @@ export default function EmailEditorPage() {
   const [isStylesOpen, setIsStylesOpen] = useState(false);
   const [isSendTestEmailOpen, setIsSendTestEmailOpen] = useState(false);
 
-  const handleSendTestEmail = (
+  return (
+    <EmailTemplateProvider>
+      <EmailEditorContent
+        isStylesOpen={isStylesOpen}
+        setIsStylesOpen={setIsStylesOpen}
+        isSendTestEmailOpen={isSendTestEmailOpen}
+        setIsSendTestEmailOpen={setIsSendTestEmailOpen}
+      />
+    </EmailTemplateProvider>
+  );
+}
+
+function EmailEditorContent({
+  isStylesOpen,
+  setIsStylesOpen,
+  isSendTestEmailOpen,
+  setIsSendTestEmailOpen,
+}: {
+  isStylesOpen: boolean;
+  setIsStylesOpen: (open: boolean) => void;
+  isSendTestEmailOpen: boolean;
+  setIsSendTestEmailOpen: (open: boolean) => void;
+}) {
+  const { template } = useEmailTemplateContext();
+
+  const handleSendTestEmail = async (
     emails: string[],
-    variables: Record<string, any>
+    variables: Record<string, any>,
+    subject: string
   ) => {
-    console.log("Sending test email to:", emails);
-    console.log("With variables:", variables);
-    // TODO: Implement actual email sending logic
+    try {
+      const response = await fetch("/api/send-test-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          emails,
+          template,
+          variables,
+          subject,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send test email");
+      }
+
+      toast.success(data.message || "Test email sent successfully!");
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send test email";
+      toast.error(errorMessage);
+      throw error; // Re-throw to let the modal handle it
+    }
   };
 
   return (
-    <EmailTemplateProvider>
-      <div className="min-h-screen flex flex-col">
-        {/* Top Bar */}
-        <div className="border-b border-border bg-background">
-          <div className="mx-auto max-w-7xl px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                  onClick={() => setIsStylesOpen(true)}
-                  title="Global Styles"
-                >
-                  <Sliders className="h-4 w-4" />
-                  Styles
-                </button>
-                <div className="h-4 w-px bg-border" />
-                <h1 className="text-lg font-medium">Email Template Editor</h1>
-                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                  Draft
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TestTransformButton />
-                <button
-                  className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                  onClick={() => setIsSendTestEmailOpen(true)}
-                >
-                  Send Test Email
-                </button>
-                <ThemeSwitcher />
-              </div>
+    <div className="min-h-screen flex flex-col">
+      {/* Top Bar */}
+      <div className="border-b border-border bg-background">
+        <div className="mx-auto max-w-7xl px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                onClick={() => setIsStylesOpen(true)}
+                title="Global Styles"
+              >
+                <Sliders className="h-4 w-4" />
+                Styles
+              </button>
+              <div className="h-4 w-px bg-border" />
+              <h1 className="text-lg font-medium">Email Template Editor</h1>
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                Draft
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TestTransformButton />
+              <button
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                onClick={() => setIsSendTestEmailOpen(true)}
+              >
+                Send Test Email
+              </button>
+              <ThemeSwitcher />
             </div>
           </div>
         </div>
-
-        {/* Email Editor Content - EmailTemplateEditor now manages its own layout */}
-        <EmailTemplateEditor />
-        <GlobalStylesPanel open={isStylesOpen} onOpenChange={setIsStylesOpen} />
-        <SendTestEmailModal
-          open={isSendTestEmailOpen}
-          onOpenChange={setIsSendTestEmailOpen}
-          onSend={handleSendTestEmail}
-        />
       </div>
-    </EmailTemplateProvider>
+
+      {/* Email Editor Content - EmailTemplateEditor now manages its own layout */}
+      <EmailTemplateEditor />
+      <GlobalStylesPanel open={isStylesOpen} onOpenChange={setIsStylesOpen} />
+      <SendTestEmailModal
+        open={isSendTestEmailOpen}
+        onOpenChange={setIsSendTestEmailOpen}
+        onSend={handleSendTestEmail}
+      />
+    </div>
   );
 }
