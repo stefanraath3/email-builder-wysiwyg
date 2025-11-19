@@ -2,6 +2,7 @@ import { Text, Heading, Img, Link, Hr } from "@react-email/components";
 import type { JSONContent } from "@tiptap/react";
 import type { GlobalStyles } from "@/types/email-template";
 import { getNodeStyles } from "./styles";
+import { transformInlineContent } from "./marks";
 
 /**
  * Transform TipTap document content into React Email components
@@ -40,7 +41,7 @@ function transformNode(
     case "paragraph":
       return (
         <Text key={key} style={getNodeStyles(node, globalStyles, "paragraph")}>
-          {getTextContent(node)}
+          {transformInlineContent(node.content, globalStyles)}
         </Text>
       );
 
@@ -52,7 +53,7 @@ function transformNode(
           as={`h${level}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6"}
           style={getNodeStyles(node, globalStyles, "heading")}
         >
-          {getTextContent(node)}
+          {transformInlineContent(node.content, globalStyles)}
         </Heading>
       );
 

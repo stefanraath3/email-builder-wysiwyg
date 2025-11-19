@@ -61,7 +61,27 @@ export function getNodeStyles(
     nodeType
   );
 
-  return convertToReactEmailCSS(mergedStyles);
+  const css = convertToReactEmailCSS(mergedStyles);
+
+  // Apply default heading sizes if not explicitly set
+  if (nodeType === "heading" && !blockStyles.fontSize) {
+    const level = node.attrs?.level || 1;
+    const headingSizes: Record<number, number> = {
+      1: 32,
+      2: 24,
+      3: 20,
+      4: 16,
+      5: 14,
+      6: 12,
+    };
+    css.fontSize = `${headingSizes[level]}px`;
+    // Also make headings bold by default
+    if (!blockStyles.fontWeight) {
+      css.fontWeight = 700;
+    }
+  }
+
+  return css;
 }
 
 /**
