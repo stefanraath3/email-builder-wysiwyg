@@ -8,6 +8,7 @@ import {
 import { EmailTemplateEditor } from "@/components/email-template-editor";
 import { GlobalStylesPanel } from "@/components/global-styles-panel";
 import { EmailTransformTestModal } from "@/components/email-transform-test-modal";
+import { SendTestEmailModal } from "@/components/send-test-email-modal";
 import { Button } from "@/components/ui/button";
 import { Sliders, Monitor, Moon, Sun } from "lucide-react";
 import { transformToReactEmail } from "@/lib/email-transform";
@@ -88,6 +89,16 @@ function ThemeSwitcher() {
 
 export default function EmailEditorPage() {
   const [isStylesOpen, setIsStylesOpen] = useState(false);
+  const [isSendTestEmailOpen, setIsSendTestEmailOpen] = useState(false);
+
+  const handleSendTestEmail = (
+    emails: string[],
+    variables: Record<string, any>
+  ) => {
+    console.log("Sending test email to:", emails);
+    console.log("With variables:", variables);
+    // TODO: Implement actual email sending logic
+  };
 
   return (
     <EmailTemplateProvider>
@@ -115,10 +126,9 @@ export default function EmailEditorPage() {
                 <TestTransformButton />
                 <button
                   className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                  disabled
-                  title="Coming soon"
+                  onClick={() => setIsSendTestEmailOpen(true)}
                 >
-                  Publish
+                  Send Test Email
                 </button>
                 <ThemeSwitcher />
               </div>
@@ -129,6 +139,11 @@ export default function EmailEditorPage() {
         {/* Email Editor Content - EmailTemplateEditor now manages its own layout */}
         <EmailTemplateEditor />
         <GlobalStylesPanel open={isStylesOpen} onOpenChange={setIsStylesOpen} />
+        <SendTestEmailModal
+          open={isSendTestEmailOpen}
+          onOpenChange={setIsSendTestEmailOpen}
+          onSend={handleSendTestEmail}
+        />
       </div>
     </EmailTemplateProvider>
   );
