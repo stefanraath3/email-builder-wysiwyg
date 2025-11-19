@@ -193,10 +193,10 @@ export function SocialLinksConfigModal({
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSave}>
+          <Button variant="outline" onClick={handleSave}>
             Save <span className="ml-2 text-xs text-muted-foreground">⌘↵</span>
           </Button>
-          <Button variant="outline" onClick={handleCancel}>
+          <Button onClick={handleCancel}>
             Cancel{" "}
             <span className="ml-2 text-xs text-muted-foreground">Esc</span>
           </Button>
