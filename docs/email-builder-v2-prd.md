@@ -407,6 +407,23 @@ Reuses novel's bubble menu with email-appropriate controls:
 
 ---
 
+### Phase 6 Summary ✅ COMPLETE
+
+Phase 6 successfully implemented a comprehensive global styles system with a Resend-inspired UI. Users can now:
+
+- Edit global styles that affect all blocks without individual overrides
+- Reset to email industry standard defaults if they make mistakes
+- Edit template header fields (From, Reply-To, Subject, Preview) with validation
+- See changes apply immediately in the editor via CSS variables
+- Control container width, alignment, padding, and background
+- Set default typography for all text content
+- Configure link colors and decoration globally
+- Define button, code block, and inline code defaults
+
+The system is robust, handles incomplete templates gracefully, and provides a solid foundation for email template creation following email industry best practices.
+
+---
+
 ### Phase 3: Block Identity (UniqueID) + Active Block Hook ✅ COMPLETE
 
 **Goal**: Give each block a stable identity and expose the currently active block to React, without reinventing selection/drag behaviour that already exists via `GlobalDragHandle`.
@@ -837,9 +854,166 @@ All parts of Phase 4 are complete and validated. The system now has:
 
 ---
 
-### Phase 6: Global Styles + Template Header UI
+### Phase 6: Global Styles + Template Header UI ✅ COMPLETE
 
 **Goal**: Add global email styling controls and editable template header fields
+
+**What Was Built**:
+
+1. **Enhanced GlobalStyles Interface** (`lib/email-blocks.ts`):
+
+   - Updated `mergeWithGlobalStyles()` to handle all block types (paragraphs, headings, blockquotes, lists)
+   - Updated `getDefaultStylesForBlockType()` to provide appropriate defaults
+   - Code blocks now inherit typography defaults in addition to their specific styles
+
+2. **Editable Template Header** (`components/template-header.tsx`):
+
+   - Transformed read-only display into editable form fields
+   - Added email validation for From/Reply-To fields with error messages
+   - Added character counters for Subject (100 chars) and Preview (150 chars)
+   - Real-time updates via `updateHeader()` from context
+   - Changes persist automatically to localStorage
+
+3. **GlobalStylesPanel UI** (`components/global-styles-panel.tsx`):
+
+   - Resend-inspired panel with Accordion sections
+   - **Body Section** (NEW): Background color, alignment, border color
+   - **Container Section**: Background color, width, alignment, padding
+   - **Typography Section**: Font family, font size, line height, text color
+   - **Link Section**: Color, text decoration
+   - **Image Section**: Border radius
+   - **Button Section**: Background color, text color, border radius, padding
+   - **Code Block Section**: Background color, border radius, padding
+   - **Inline Code Section**: Background color, text color, border radius
+   - **Custom CSS Section**: Advanced CSS injection
+   - **Reset to Defaults Button**: Restores all styles to email industry standards
+   - Reused existing form controls (ColorPickerInput, PaddingControl, SliderNumberInput)
+   - Real-time updates (no "Apply" button needed)
+
+4. **Styles Button Integration** (`app/email-editor/page.tsx`):
+
+   - Added "Styles" button with Sliders icon to top bar
+   - Opens GlobalStylesPanel on click
+   - Panel slides in from left side (matching other panels)
+   - Solid background (not transparent)
+
+5. **CSS Variables System** (`lib/global-styles-css.ts`, `components/email-template-editor.tsx`):
+
+   - Created `globalStylesToCSSVariables()` utility with defensive defaults
+   - Handles partial/incomplete GlobalStyles objects gracefully
+   - Injects CSS variables into editor wrapper element
+   - Updated `prosemirror.css` to use CSS variables with fallbacks:
+     - Typography: `--email-font-family`, `--email-font-size`, `--email-line-height`, `--email-text-color`
+     - Links: `--email-link-color`, `--email-link-decoration`
+     - Container: `--email-container-width`, padding variables
+     - Code blocks: `--email-code-block-bg`, `--email-code-block-radius`, padding variables
+     - Inline code: `--email-inline-code-bg`, `--email-inline-code-text`, `--email-inline-code-radius`
+   - Applied container width/padding/alignment to editor canvas wrapper
+   - Global style changes update the editor in real-time
+
+6. **Block Inheritance System**:
+
+   - Blocks without inline styles inherit from CSS variables automatically
+   - Typography affects all text blocks (paragraphs, headings, lists, blockquotes)
+   - Link colors update globally across all links
+   - Code styling updates globally for all code blocks
+   - `mergeWithGlobalStyles()` utility ready for Phase 7 (React Email export)
+
+7. **Padding Merge Fix** (`components/global-styles-panel.tsx`):
+   - Fixed update functions to merge padding objects correctly
+   - Added defensive checks for undefined padding using `DEFAULT_PADDING`
+   - Container, Button, and CodeBlock sections handle nested padding updates properly
+
+**Validated Behavior**:
+
+- ✅ Global styles panel opens from left side with solid background
+- ✅ All style categories are editable with proper form controls
+- ✅ Changes apply immediately to the editor (real-time WYSIWYG)
+- ✅ Container width changes resize editor canvas
+- ✅ Container padding affects editor spacing
+- ✅ Container alignment (left/center/right) positions editor correctly
+- ✅ Typography changes (font family, size, line height, color) affect all text blocks
+- ✅ Link color/decoration changes affect all links globally
+- ✅ Code block and inline code styling updates globally
+- ✅ Template header fields are editable with validation
+- ✅ Email validation prevents invalid addresses
+- ✅ Character counters help users stay within limits
+- ✅ Reset to Defaults button restores email industry standard styles
+- ✅ All changes persist to localStorage
+- ✅ Handles partial/incomplete templates from old localStorage data
+- ✅ No runtime errors when editing global styles
+
+**Default Global Styles** (Email Industry Standards):
+
+```typescript
+container: {
+  backgroundColor: "#ffffff",
+  width: 600, // Email standard
+  align: "center",
+  padding: { top: 0, right: 0, bottom: 0, left: 0 }
+},
+typography: {
+  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  fontSize: 14,
+  lineHeight: 1.55,
+  color: "#000000"
+},
+link: {
+  color: "#2563eb",
+  textDecoration: "underline"
+},
+image: {
+  borderRadius: 0
+},
+button: {
+  backgroundColor: "#2563eb",
+  textColor: "#ffffff",
+  borderRadius: 4,
+  padding: { top: 12, right: 24, bottom: 12, left: 24 }
+},
+codeBlock: {
+  backgroundColor: "#f3f4f6",
+  borderRadius: 4,
+  padding: { top: 16, right: 16, bottom: 16, left: 16 }
+},
+inlineCode: {
+  backgroundColor: "#f3f4f6",
+  textColor: "#000000",
+  borderRadius: 4
+}
+```
+
+**Files Created (2)**:
+
+- `/lib/global-styles-css.ts` – CSS variable conversion utilities with defensive defaults
+- `/components/global-styles-panel.tsx` – Resend-inspired global styles UI
+
+**Files Modified (5)**:
+
+- `/lib/email-blocks.ts` – Enhanced merge functions for all block types
+- `/components/template-header.tsx` – Editable form fields with validation
+- `/app/email-editor/page.tsx` – Added Styles button and panel integration
+- `/components/email-template-editor.tsx` – CSS variable injection and container styling
+- `/styles/prosemirror.css` – Use CSS variables with fallbacks
+
+**Technical Architecture**:
+
+Global styles are centralized:
+
+1. **Type Definition**: `/types/email-template.ts` - `GlobalStyles` interface
+2. **Defaults**: `/lib/email-template-defaults.ts` - `createDefaultGlobalStyles()`
+3. **State Management**: `/lib/email-template-context.tsx` - `updateGlobalStyles()` with deep merge
+4. **Utilities**: `/lib/email-blocks.ts` - `mergeWithGlobalStyles()`, `getDefaultStylesForBlockType()`
+5. **CSS Variables**: `/lib/global-styles-css.ts` - Conversion to CSS custom properties
+6. **Runtime State**: React context + localStorage (no external JSON/store needed)
+
+**Next Phase**: Phase 7 - React Email Transformer + Preview/Export
+
+---
+
+### Original Phase 6 Design Spec
+
+Below is the original design spec for reference:
 
 **Deliverables**:
 
@@ -849,7 +1023,7 @@ All parts of Phase 4 are complete and validated. The system now has:
    - Create defaults with sensible values
    - Wire to template state
 
-2. Build GlobalStylesPanel:
+2. Build GlobalStylesPanel (COMPLETED ABOVE):
 
    ```tsx
    // /components/global-styles-panel.tsx
@@ -1995,6 +2169,21 @@ All parts of Phase 4 are complete and validated. The system now has:
 - ✅ JSON debug panel shows all template sections
 - ✅ All existing novel features work (slash menu, bubble menu, drag handle, markdown, AI, uploads)
 - ✅ Theme system integration (dark/light mode support)
+
+---
+
+### Phases Summary Status
+
+- ✅ **Phase 1**: EmailTemplate Wrapper + JSON Visibility - COMPLETE
+- ✅ **Phase 2**: Email-Aware Slash Menu + Block Taxonomy - COMPLETE
+- ✅ **Phase 3**: Block Identity (UniqueID) + Active Block Hook - COMPLETE
+- ✅ **Phase 4**: Attributes Handle + Panel Integration - COMPLETE
+- ✅ **Phase 5**: Block Attributes Panel v1 (Interactive Styling) - COMPLETE
+- ✅ **Phase 6**: Global Styles + Template Header UI - COMPLETE
+- 🚧 **Phase 7**: React Email Transformer + Preview/Export - NEXT
+- 📋 **Phase 8**: Email-Specific Block Nodes - PENDING
+- 📋 **Phase 9**: Variables System - PENDING
+- 📋 **Phase 10**: Polish, Testing & Email Client Compatibility - PENDING
 
 ---
 
