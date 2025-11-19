@@ -1,11 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { EmailTemplateProvider } from "@/lib/email-template-context";
+import {
+  EmailTemplateProvider,
+  useEmailTemplateContext,
+} from "@/lib/email-template-context";
 import { EmailTemplateEditor } from "@/components/email-template-editor";
 import { GlobalStylesPanel } from "@/components/global-styles-panel";
 import Menu from "@/components/ui/menu";
 import { Sliders } from "lucide-react";
+import { transformToReactEmail } from "@/lib/email-transform";
+import { render } from "@react-email/render";
+
+function TestTransformButton() {
+  const { template } = useEmailTemplateContext();
+
+  const handleTestTransform = async () => {
+    try {
+      console.log("🔄 Starting transformation...");
+      const reactEmail = transformToReactEmail(template);
+      const html = await render(reactEmail);
+      console.log("✅ Transform successful!");
+      console.log("HTML length:", html.length);
+      console.log("HTML preview (first 500 chars):", html.substring(0, 500));
+      console.log("Full HTML:", html);
+    } catch (error) {
+      console.error("❌ Transform failed:", error);
+    }
+  };
+
+  return (
+    <button
+      className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+      onClick={handleTestTransform}
+      title="Test email transformation (check console)"
+    >
+      Test Transform
+    </button>
+  );
+}
 
 export default function EmailEditorPage() {
   const [isStylesOpen, setIsStylesOpen] = useState(false);
@@ -24,6 +57,9 @@ export default function EmailEditorPage() {
             </div>
             <div className="flex items-center gap-2">
               {/* Placeholder buttons for future phases */}
+              <EmailTemplateProvider>
+                <TestTransformButton />
+              </EmailTemplateProvider>
               <button
                 className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
                 disabled

@@ -1,0 +1,102 @@
+import type { GlobalStyles } from "@/types/email-template";
+import type { BlockStyles } from "@/types/block-styles";
+import type { JSONContent } from "@tiptap/react";
+import { mergeWithGlobalStyles } from "@/lib/email-blocks";
+
+/**
+ * Convert GlobalStyles to CSS properties for email Body element
+ */
+export function getBodyStyles(globalStyles: GlobalStyles): React.CSSProperties {
+  return {
+    backgroundColor: globalStyles.body.backgroundColor,
+    margin: 0,
+    padding: 0,
+    fontFamily: globalStyles.typography.fontFamily,
+    fontSize: `${globalStyles.typography.fontSize}px`,
+    lineHeight: globalStyles.typography.lineHeight,
+    color: globalStyles.typography.color,
+  };
+}
+
+/**
+ * Convert GlobalStyles to CSS properties for email Container element
+ */
+export function getContainerStyles(
+  globalStyles: GlobalStyles
+): React.CSSProperties {
+  const { container } = globalStyles;
+  const css: React.CSSProperties = {
+    maxWidth: `${container.width}px`,
+    backgroundColor: container.backgroundColor,
+    paddingTop: `${container.padding.top}px`,
+    paddingRight: `${container.padding.right}px`,
+    paddingBottom: `${container.padding.bottom}px`,
+    paddingLeft: `${container.padding.left}px`,
+  };
+
+  // Apply horizontal alignment
+  if (container.align === "center") {
+    css.marginLeft = "auto";
+    css.marginRight = "auto";
+  } else if (container.align === "right") {
+    css.marginLeft = "auto";
+  }
+
+  return css;
+}
+
+/**
+ * Get merged and converted styles for a specific node
+ * Merges block-level styles with global defaults and converts to React.CSSProperties
+ */
+export function getNodeStyles(
+  node: JSONContent,
+  globalStyles: GlobalStyles,
+  nodeType: string
+): React.CSSProperties {
+  const blockStyles: BlockStyles = node.attrs?.styles || {};
+  const mergedStyles = mergeWithGlobalStyles(
+    blockStyles,
+    globalStyles,
+    nodeType
+  );
+
+  return convertToReactEmailCSS(mergedStyles);
+}
+
+/**
+ * Convert BlockStyles to React.CSSProperties format
+ * Handles camelCase conversion and proper value formatting for email-safe CSS
+ */
+function convertToReactEmailCSS(styles: BlockStyles): React.CSSProperties {
+  const css: React.CSSProperties = {};
+
+  // Background
+  if (styles.backgroundColor) {
+    css.backgroundColor = styles.backgroundColor;
+  }
+
+  // Typography
+  if (styles.textColor) css.color = styles.textColor;
+  if (styles.fontSize) css.fontSize = `${styles.fontSize}px`;
+  if (styles.fontWeight) css.fontWeight = styles.fontWeight;
+  if (styles.lineHeight) css.lineHeight = styles.lineHeight;
+  if (styles.fontFamily) css.fontFamily = styles.fontFamily;
+  if (styles.textAlign) css.textAlign = styles.textAlign;
+
+  // Layout
+  if (styles.padding) {
+    css.paddingTop = `${styles.padding.top}px`;
+    css.paddingRight = `${styles.padding.right}px`;
+    css.paddingBottom = `${styles.padding.bottom}px`;
+    css.paddingLeft = `${styles.padding.left}px`;
+  }
+
+  // Border
+  if (styles.borderRadius !== undefined) {
+    css.borderRadius = `${styles.borderRadius}px`;
+  }
+
+  return css;
+}
+
