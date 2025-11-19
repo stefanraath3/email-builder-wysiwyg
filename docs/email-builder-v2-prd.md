@@ -41,13 +41,11 @@ User edits in TipTap
 ### Key Architectural Decisions
 
 1. **Data Model**: `EmailTemplate` wrapper around TipTap doc
-
    - `header`: from, replyTo, subject, preview
    - `globalStyles`: email-wide styling defaults
    - `content`: TipTap JSONContent (the actual document)
 
 2. **Block Strategy**: Extend StarterKit nodes, don't replace
-
    - Keep existing nodes: `paragraph`, `heading`, `bulletList`, `orderedList`, `blockquote`, `codeBlock`, `image`, `youtube`, `twitter`
    - Add email-specific nodes: `buttonBlock`, `dividerBlock`, `sectionBlock`, `socialLinksBlock`, `unsubscribeFooterBlock`, `htmlBlock`, `variableBlock`
    - All block nodes get:
@@ -55,19 +53,16 @@ User edits in TipTap
      - `attrs.styles` (structured style data for email export)
 
 3. **Styling Architecture**: Two-level system
-
    - **Global styles**: template-wide defaults (container, typography, links, buttons, etc.)
    - **Block-level styles**: instance-specific overrides (background, padding, borders, alignment, typography)
 
 4. **Block Manipulation**
-
    - Reuse `GlobalDragHandle` from novel for drag-to-reorder
    - Custom `BlockMeta/Selection` extension to track active block
    - Side rail UI (React) that positions based on block metadata
    - Attributes panel (Sheet) for block customization
 
 5. **Email Safety**
-
    - Transformer validates blocks and produces React Email components
    - Email-safe constraints enforced via schema and linting
    - Inline styles in output (no external CSS)
@@ -296,14 +291,12 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Create `EmailTemplateEditor` component:
-
    - Wraps the existing `TailwindAdvancedEditor`
    - Manages `EmailTemplate` state
    - Updates `template.content` when editor changes
    - Persists entire template to localStorage
 
 4. Enhanced JSON debug panel:
-
    - Show full `EmailTemplate` JSON (not just TipTap content)
    - Collapsible sections for header, globalStyles, content
    - Copy-to-clipboard button
@@ -338,7 +331,6 @@ Reuses novel's bubble menu with email-appropriate controls:
 **Deliverables**:
 
 1. Replace slash command items with email-focused list:
-
    - Group by category: TEXT, MEDIA, LAYOUT, UTILITY
    - Map to existing nodes where possible
    - Create placeholder entries for not-yet-implemented blocks
@@ -376,13 +368,11 @@ Reuses novel's bubble menu with email-appropriate controls:
    ```
 
 3. Implement placeholder blocks for LAYOUT/UTILITY:
-
    - Simple paragraph with special class/data attribute
    - Or minimal custom nodes with just `content` and `category` attrs
    - Render with distinct styling to show they're placeholders
 
 4. Update visual design of slash menu:
-
    - Category headers
    - Email-appropriate icons
    - Descriptions matching email use cases
@@ -438,7 +428,6 @@ The system is robust, handles incomplete templates gracefully, and provides a so
 **What Was Built**:
 
 1. **UniqueID Extension Integration** (`@tiptap/extension-unique-id@2.27.1`):
-
    - Configured with:
      - `attributeName: "uid"`
      - `types: ["paragraph", "heading", "blockquote", "codeBlock", "bulletList", "orderedList", "taskList", "taskItem", "image", "youtube", "twitter"]`
@@ -448,7 +437,6 @@ The system is robust, handles incomplete templates gracefully, and provides a so
    - UIDs persist across drag, paste, undo/redo
 
 2. **Block ID Helper Utilities** (`/lib/email-blocks.ts`):
-
    - `BLOCK_UID_ATTR` constant for centralized attribute name
    - `findNodeByUidJson(doc, uid)` → `{ node, path } | null` (pure JSON traversal)
    - `findNodeByUid(editor, uid)` → `{ node, pos } | null` (live editor search)
@@ -476,7 +464,6 @@ The system is robust, handles incomplete templates gracefully, and provides a so
    - Must be used inside `EditorContent` context (requires TipTap's `useEditor`)
 
 4. **Dev Test Panel** (`/components/active-block-test-panel.tsx`):
-
    - Real-time display of active block info: UID, type, position, bounding box
    - Dev-only (checks `process.env.NODE_ENV`)
    - Integrated into email editor for easy testing
@@ -520,7 +507,6 @@ The system is robust, handles incomplete templates gracefully, and provides a so
 **What Was Built**:
 
 1. **Modified `GlobalDragHandle` click handler** (`lib/novel/extensions/global-drag-handle.ts`):
-
    - On attributes handle click, computes the hovered block's start position using `calcNodePos` and `lastHoveredPos`
    - Sets ProseMirror selection to the clicked block:
      - Try `NodeSelection.create()` first (works for atomic nodes like images, embeds)
@@ -530,7 +516,6 @@ The system is robust, handles incomplete templates gracefully, and provides a so
    - Emits `emailEditor:openAttributes` custom window event to bridge plugin → React
 
 2. **Created stub `AttributesPanel` component** (`components/attributes-panel.tsx`):
-
    - Uses shadcn `Sheet` (right-side, 400px width, solid background)
    - Props: `open`, `onOpenChange`, `blockUid`, `blockType`
    - Displays read-only block info:
@@ -541,7 +526,6 @@ The system is robust, handles incomplete templates gracefully, and provides a so
    - Sheet overlay makes editor non-interactive while open
 
 3. **Integrated into `EmailTemplateEditor`** (`components/email-template-editor.tsx`):
-
    - Added `isAttributesOpen` state
    - Added window event listener for `emailEditor:openAttributes` event
    - Created `AttributesPanelWrapper` component inside `EditorContent`:
@@ -673,7 +657,6 @@ All parts of Phase 4 are complete and validated. The system now has:
    ```
 
 3. Build AttributesPanel UI:
-
    - Use shadcn Sheet for right-side panel
    - Sections: Appearance, Typography, Layout
    - Form controls:
@@ -715,7 +698,6 @@ All parts of Phase 4 are complete and validated. The system now has:
    ```
 
 5. Apply styles in editor view:
-
    - Map `attrs.styles` to inline styles in `renderHTML`
    - Use `HTMLAttributes` or custom NodeView
    - Ensure WYSIWYG: what you style is what you see
@@ -738,20 +720,17 @@ All parts of Phase 4 are complete and validated. The system now has:
 **What Was Built**:
 
 1. **BlockStyles Type System** (`/types/block-styles.ts`):
-
    - Complete `BlockStyles` interface with all email-safe CSS properties
    - Type subsets: `TextBlockStyles`, `ImageBlockStyles`, `CodeBlockStyles`, `ListBlockStyles`
    - Removed "justify" alignment (Resend only supports left/center/right)
 
 2. **Style Utility Functions** (added to `/lib/email-blocks.ts`):
-
    - `convertBlockStylesToInlineCSS(styles, options?)` - Converts BlockStyles to inline CSS string
    - Special image alignment handling via `{ isImage: true }` flag (uses `display: block` + margin auto)
    - `mergeWithGlobalStyles()` - Merges block styles with global defaults
    - `getDefaultStylesForBlockType()` - Returns appropriate defaults per block type
 
 3. **Extended TipTap Nodes with `styles` Attribute**:
-
    - `/lib/extensions/email-paragraph.ts` - Paragraph with styles
    - `/lib/extensions/email-heading.ts` - Heading with styles
    - `/lib/extensions/email-blockquote.ts` - Blockquote with styles
@@ -761,13 +740,11 @@ All parts of Phase 4 are complete and validated. The system now has:
    - All use `parseHTML` to read `data-styles` attribute and `renderHTML` to write inline CSS
 
 4. **Updated Email Extensions Configuration** (`/components/email-extensions.ts`):
-
    - Disabled StarterKit's paragraph, heading, blockquote, codeBlock, bulletList, orderedList, listItem
    - Added all email-specific extended nodes with configured HTMLAttributes
    - Maintains all other extensions (UniqueID, placeholder, links, images, etc.)
 
 5. **Resend-Inspired Attributes Panel UI**:
-
    - `/components/attributes-panel/color-picker-input.tsx` - Native `<input type="color">` + hex text input
    - `/components/attributes-panel/padding-control.tsx` - Unified input with lock/unlock toggle
    - `/components/attributes-panel/slider-number-input.tsx` - Slider + number input combo
@@ -777,7 +754,6 @@ All parts of Phase 4 are complete and validated. The system now has:
    - `/components/attributes-panel/types.ts` - Shared TypeScript types
 
 6. **Rebuilt AttributesPanel Component** (`/components/attributes-panel.tsx`):
-
    - **Structure**: Type → UID → Alignment → Styles → Reset
    - **Alignment**: Always visible dropdown for all block types
    - **Styles Section**:
@@ -861,13 +837,11 @@ All parts of Phase 4 are complete and validated. The system now has:
 **What Was Built**:
 
 1. **Enhanced GlobalStyles Interface** (`lib/email-blocks.ts`):
-
    - Updated `mergeWithGlobalStyles()` to handle all block types (paragraphs, headings, blockquotes, lists)
    - Updated `getDefaultStylesForBlockType()` to provide appropriate defaults
    - Code blocks now inherit typography defaults in addition to their specific styles
 
 2. **Editable Template Header** (`components/template-header.tsx`):
-
    - Transformed read-only display into editable form fields
    - Added email validation for From/Reply-To fields with error messages
    - Added character counters for Subject (100 chars) and Preview (150 chars)
@@ -875,7 +849,6 @@ All parts of Phase 4 are complete and validated. The system now has:
    - Changes persist automatically to localStorage
 
 3. **GlobalStylesPanel UI** (`components/global-styles-panel.tsx`):
-
    - Resend-inspired panel with Accordion sections
    - **Body Section** (NEW): Background color, alignment, border color
    - **Container Section**: Background color, width, alignment, padding
@@ -891,14 +864,12 @@ All parts of Phase 4 are complete and validated. The system now has:
    - Real-time updates (no "Apply" button needed)
 
 4. **Styles Button Integration** (`app/email-editor/page.tsx`):
-
    - Added "Styles" button with Sliders icon to top bar
    - Opens GlobalStylesPanel on click
    - Panel slides in from left side (matching other panels)
    - Solid background (not transparent)
 
 5. **CSS Variables System** (`lib/global-styles-css.ts`, `components/email-template-editor.tsx`):
-
    - Created `globalStylesToCSSVariables()` utility with defensive defaults
    - Handles partial/incomplete GlobalStyles objects gracefully
    - Injects CSS variables into editor wrapper element
@@ -912,7 +883,6 @@ All parts of Phase 4 are complete and validated. The system now has:
    - Global style changes update the editor in real-time
 
 6. **Block Inheritance System**:
-
    - Blocks without inline styles inherit from CSS variables automatically
    - Typography affects all text blocks (paragraphs, headings, lists, blockquotes)
    - Link colors update globally across all links
@@ -1018,7 +988,6 @@ Below is the original design spec for reference:
 **Deliverables**:
 
 1. Implement GlobalStyles in EmailTemplate:
-
    - Already defined in Phase 1 type
    - Create defaults with sensible values
    - Wire to template state
@@ -1072,13 +1041,11 @@ Below is the original design spec for reference:
    ```
 
 3. Add "Styles" button to top bar:
-
    - Next to existing buttons (Publish, etc.)
    - Opens GlobalStylesPanel
    - Icon: Palette or Sliders
 
 4. Apply global styles to editor:
-
    - Inject CSS variables or inline styles based on globalStyles
    - Update editor wrapper with container width, padding
    - Apply base typography to `.ProseMirror`
@@ -1142,7 +1109,6 @@ Below is the original design spec for reference:
    ```
 
 6. Integrate header into editor layout:
-
    - Position above editor canvas
    - Collapsible or always visible
    - Clean, minimal design
@@ -1188,9 +1154,76 @@ Below is the original design spec for reference:
 
 ---
 
-#### **Part 1: React Email Setup & Basic Transformer** ✅ Foundation
+#### **Part 1: React Email Setup & Basic Transformer** ✅ COMPLETE
 
 **Goal**: Install React Email, create the basic transformation pipeline, and validate it works with a single block type (paragraph).
+
+**What Was Built**:
+
+1. **Dependencies Installed**:
+   - `@react-email/components@1.0.1` - React Email UI components
+   - `@react-email/render@2.0.0` - Server-side HTML rendering
+
+2. **Transformer Module Structure** (`/lib/email-transform/`):
+   - `index.tsx` - Main `transformToReactEmail()` function with Html/Body/Container wrapper
+   - `nodes.tsx` - Node transformation logic (paragraph with plain text support)
+   - `styles.ts` - Style conversion utilities (BlockStyles → React.CSSProperties)
+   - `types.ts` - TypeScript type definitions for transformer
+   - `marks.tsx` - Placeholder for Part 3 (inline formatting)
+
+3. **Test Modal Component** (`/components/email-transform-test-modal.tsx`):
+   - Beautiful modal with Preview/HTML Source tabs
+   - Preview shows email in iframe (exactly as it appears in email clients)
+   - HTML Source shows formatted code with copy button
+   - Character count display
+
+4. **Test Transform Button** (`/app/email-editor/page.tsx`):
+   - "Test Transform" button in editor top bar
+   - Opens modal with live preview
+   - Always uses latest template content (no refresh needed)
+
+5. **Fixed Global Styles Persistence Bug**:
+   - Container/body background colors now persist correctly on page reload
+   - Added `isInitialized` dependency to CSS variable application effect
+   - CSS variables now apply after editor DOM is ready
+
+**Validated Behavior**:
+
+- ✅ Transforms paragraphs with plain text to email-safe HTML
+- ✅ Global styles (typography, colors, container width) applied correctly
+- ✅ HTML uses table-based layout (email client compatible)
+- ✅ Inline styles only (no external CSS)
+- ✅ Preview modal shows WYSIWYG rendering
+- ✅ HTML is properly formatted with pretty print
+- ✅ Container background persists after page reload
+- ✅ Test Transform always shows latest editor content
+
+**HTML Output Quality**:
+
+- XHTML 1.0 Transitional DOCTYPE ✅
+- Table-based layout (not divs) ✅
+- Inline styles on all elements ✅
+- Preview text hidden properly ✅
+- Apple Mail meta tag included ✅
+- All typography defaults applied ✅
+
+**Files Created (6)**:
+
+- `/lib/email-transform/index.tsx`
+- `/lib/email-transform/nodes.tsx`
+- `/lib/email-transform/marks.tsx`
+- `/lib/email-transform/styles.ts`
+- `/lib/email-transform/types.ts`
+- `/components/email-transform-test-modal.tsx`
+
+**Files Modified (2)**:
+
+- `/app/email-editor/page.tsx` - Added test button and modal
+- `/components/email-template-editor.tsx` - Fixed CSS variable application timing
+
+---
+
+#### **Part 2: Complete Node Transformers** 🚧 NEXT
 
 **Tasks**:
 
@@ -1850,7 +1883,6 @@ Below is the original design spec for reference:
    ```
 
 4. **Add loading state**:
-
    - Show spinner while rendering
    - Smooth transition when loaded
 
@@ -2041,7 +2073,6 @@ Below is the original design spec for reference:
    ```
 
 4. **Add toast notifications** (already using sonner):
-
    - Success feedback for all export actions
    - Error handling with user-friendly messages
 
@@ -2534,7 +2565,6 @@ Below is the original design spec for reference:
    ```
 
 7. Update slash command with real nodes:
-
    - Wire LAYOUT category items to new nodes
    - Remove placeholder implementations
 
@@ -2727,17 +2757,14 @@ Below is the original design spec for reference:
    ```
 
 5. Add "Insert Variable" to slash menu:
-
    - Shows list of defined variables
    - Inserts `variable` node with selected name
 
 6. Support variables in header fields:
-
    - Subject and preview can contain `{{variableName}}` syntax
    - Parse and render in preview/export
 
 7. Variable preview mode:
-
    - Toggle in UI to show variables with sample data
    - "Preview with data" feature
 
@@ -2803,13 +2830,11 @@ Below is the original design spec for reference:
    ```
 
 2. **Linting panel**:
-
    - Show issues in sidebar or bottom panel
    - Click issue to navigate to block
    - Auto-fix button where applicable
 
 3. **Email client testing setup**:
-
    - Test HTML output in:
      - Gmail (web, iOS, Android)
      - Outlook (desktop, web)
@@ -2820,7 +2845,6 @@ Below is the original design spec for reference:
    - Adjust React Email output for compatibility
 
 4. **Markdown import improvements**:
-
    - Test paste from ChatGPT, Notion, Google Docs, Word
    - Handle common markdown variants
    - Improve heading detection
@@ -2843,35 +2867,30 @@ Below is the original design spec for reference:
    ```
 
 6. **Undo/redo improvements**:
-
    - Ensure undo works across all operations
    - Preserve block selections
    - Undo for global styles changes
    - Undo for header edits
 
 7. **Performance optimizations**:
-
    - Debounce expensive computations
    - Memoize transformer functions
    - Optimize re-renders in attributes panel
    - Lazy load preview iframe
 
 8. **Accessibility**:
-
    - Keyboard navigation for all panels
    - ARIA labels on buttons
    - Focus management
    - Screen reader announcements for block operations
 
 9. **Error handling**:
-
    - Graceful handling of malformed JSON
    - Network error handling for AI/uploads
    - Validation error messages
    - Recovery mechanisms
 
 10. **Documentation**:
-
     - User guide for email builder
     - Block type reference
     - Variables guide
@@ -2914,44 +2933,37 @@ Below is the original design spec for reference:
 ### Potential Phase 11+: Advanced Features
 
 - **Template library & presets**
-
   - Pre-built email templates
   - Categorized by use case (newsletter, transactional, marketing)
   - One-click insert
 
 - **Collaboration features**
-
   - Real-time collaborative editing (using Tiptap Collaboration)
   - Comments and suggestions
   - Version history
   - Team permissions
 
 - **A/B testing support**
-
   - Define variants
   - Conditional content blocks
   - Analytics integration
 
 - **Advanced layouts**
-
   - 3+ column sections
   - Complex table layouts
   - Nested sections
 
 - **Dynamic content**
-
   - Conditional logic (`if/else` for variables)
   - Loops (repeat blocks for lists)
   - Custom Liquid-like templating
 
 - **Integration APIs**
-
   - Direct send via Resend/SendGrid/etc.
   - CRM integrations
   - Import from other platforms
 
 - **Enhanced media**
-
   - GIF support
   - Video thumbnails linking to video
   - Background images for sections
