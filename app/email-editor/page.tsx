@@ -22,7 +22,9 @@ function TestTransformButton() {
     try {
       console.log("🔄 Starting transformation...");
       const reactEmail = transformToReactEmail(template);
-      const html = await render(reactEmail);
+      const html = await render(reactEmail, {
+        pretty: true, // Enable pretty printing with proper indentation
+      });
       console.log("✅ Transform successful!");
       console.log("HTML length:", html.length);
       setRenderedHtml(html);
