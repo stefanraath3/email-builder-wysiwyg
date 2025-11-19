@@ -136,3 +136,4 @@ MIT
 ---
 
 Built with ❤️ using TipTap, React Email, and Next.js
+# email-builder-wysiwyg
