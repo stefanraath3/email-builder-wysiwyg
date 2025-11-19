@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Email Builder WYSIWYG
 
-## Getting Started
+A **Resend Template-style WYSIWYG Email Editor** built with Next.js and TipTap. Create beautiful, email-safe templates with a Notion-like editing experience.
 
-First, run the development server:
+## ✨ Features
+
+- **Notion-Style Editing** – Intuitive block-based editor with slash commands (`/`), drag-and-drop, and real-time formatting
+- **Email-Safe Output** – Generates React Email components that render to email-safe HTML with inline styles
+- **WYSIWYG Preview** – What you see in the editor is what you get in the email
+- **Rich Content Blocks** – Headings, paragraphs, lists, images, code blocks, quotes, and more
+- **Global Styles** – Customize container width, padding, typography, colors, and more
+- **Block-Level Styling** – Fine-tune individual blocks with custom backgrounds, borders, padding, and alignment
+- **Markdown Support** – Full markdown compatibility for content authoring
+- **AI-Powered** – Built-in AI completion and content generation (optional)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm (or npm/yarn)
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Run development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) and navigate to `/email-editor` to start building.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Tech Stack
 
-## Learn More
+- **[TipTap](https://tiptap.dev/)** – Rich text editing foundation (ProseMirror-based)
+- **[React Email](https://react.email/)** – Email-safe HTML generation
+- **[Next.js](https://nextjs.org/)** – React framework
+- **[shadcn/ui](https://ui.shadcn.com/)** – UI component library
+- **[Novel.sh](https://novel.sh/)** – Editor components and extensions
 
-To learn more about Next.js, take a look at the following resources:
+### Data Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+User edits in TipTap
+  → EmailTemplate JSON (header + globalStyles + content)
+    → content = ProseMirror JSON (extended nodes with email attrs)
+      → Transformer layer
+        → React Email components
+          → Email HTML (inline styles, email-safe)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📝 Usage
 
-## Deploy on Vercel
+### Creating Templates
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Start typing** – The editor supports markdown and slash commands
+2. **Use slash commands** – Type `/` to see available blocks (headings, lists, images, etc.)
+3. **Format text** – Select text to see the bubble menu with formatting options
+4. **Customize styles** – Click the "Styles" button to adjust global styles
+5. **Edit block attributes** – Click the attributes button on any block for fine-grained control
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Exporting Templates
+
+The editor transforms your content into React Email components. Use the "Test Transform" button to preview the generated HTML output.
+
+## 🎨 Block Types
+
+### Text Blocks
+
+- Paragraph
+- Heading 1, 2, 3
+- Bullet List
+- Numbered List
+- Blockquote
+- Code Block
+
+### Media Blocks
+
+- Image (with upload support)
+- YouTube embed
+- Twitter/X embed
+
+### Layout Blocks
+
+- Button
+- Divider
+- Section
+
+## 🔧 Development
+
+```bash
+# Type checking
+pnpm typecheck
+
+# Linting
+pnpm lint
+
+# Build for production
+pnpm build
+```
+
+## 📚 Project Structure
+
+```
+├── app/
+│   └── email-editor/     # Main editor page
+├── components/
+│   ├── email-template-editor.tsx  # Main editor component
+│   ├── attributes-panel/          # Block styling controls
+│   └── selectors/                 # Formatting selectors
+├── lib/
+│   ├── email-transform/           # React Email transformer
+│   ├── email-template-context.tsx # Template state management
+│   └── novel/                     # Editor components
+└── types/
+    └── email-template.ts          # TypeScript definitions
+```
+
+## 🎯 Roadmap
+
+- [ ] Preview mode
+- [ ] Export to Resend format
+- [ ] Template variables
+- [ ] More block types (sections, columns, social links)
+- [ ] Email client testing
+- [ ] Template library
+
+## 📄 License
+
+MIT
+
+---
+
+Built with ❤️ using TipTap, React Email, and Next.js
