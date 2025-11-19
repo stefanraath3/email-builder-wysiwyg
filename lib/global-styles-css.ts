@@ -16,6 +16,10 @@ export function globalStylesToCSSVariables(
   // Merge with defaults to ensure all properties exist
   const defaults = createDefaultGlobalStyles();
   const styles: GlobalStyles = {
+    body: {
+      ...defaults.body,
+      ...globalStyles.body,
+    },
     container: {
       ...defaults.container,
       ...globalStyles.container,
@@ -60,6 +64,18 @@ export function globalStylesToCSSVariables(
   };
 
   return {
+    // Body
+    "--email-body-bg": styles.body.backgroundColor,
+    "--email-body-border-color": styles.body.borderColor || "#000000",
+
+    // Container
+    "--email-container-bg": styles.container.backgroundColor || "#ffffff",
+    "--email-container-width": `${styles.container.width}px`,
+    "--email-container-padding-top": `${styles.container.padding.top}px`,
+    "--email-container-padding-right": `${styles.container.padding.right}px`,
+    "--email-container-padding-bottom": `${styles.container.padding.bottom}px`,
+    "--email-container-padding-left": `${styles.container.padding.left}px`,
+
     // Typography
     "--email-font-family": styles.typography.fontFamily,
     "--email-font-size": `${styles.typography.fontSize}px`,
@@ -69,13 +85,6 @@ export function globalStylesToCSSVariables(
     // Link
     "--email-link-color": styles.link.color,
     "--email-link-decoration": styles.link.textDecoration,
-
-    // Container
-    "--email-container-width": `${styles.container.width}px`,
-    "--email-container-padding-top": `${styles.container.padding.top}px`,
-    "--email-container-padding-right": `${styles.container.padding.right}px`,
-    "--email-container-padding-bottom": `${styles.container.padding.bottom}px`,
-    "--email-container-padding-left": `${styles.container.padding.left}px`,
 
     // Image
     "--email-image-border-radius": `${styles.image.borderRadius}px`,

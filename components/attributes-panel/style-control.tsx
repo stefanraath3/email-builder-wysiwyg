@@ -16,12 +16,14 @@ import type { StyleOption } from "./style-dropdown-menu";
 import { ColorPickerInput } from "./color-picker-input";
 import { PaddingControl } from "./padding-control";
 import { SliderNumberInput } from "./slider-number-input";
+import { Padding } from "@/types/email-template";
 
 interface StyleControlProps {
   styleKey: StyleOption;
   styles: BlockStyles;
   onChange: (key: keyof BlockStyles, value: any) => void;
   onRemove: () => void;
+  inheritedDefault?: any; // The inherited default value for this style
 }
 
 const STYLE_LABELS: Record<StyleOption, string> = {
@@ -43,8 +45,11 @@ export function StyleControl({
   styles,
   onChange,
   onRemove,
+  inheritedDefault,
 }: StyleControlProps) {
   const label = STYLE_LABELS[styleKey];
+  const currentValue = styles[styleKey];
+  const hasInheritedDefault = inheritedDefault !== undefined;
 
   const renderControl = () => {
     switch (styleKey) {
@@ -52,28 +57,42 @@ export function StyleControl({
       case "borderColor":
       case "textColor":
         return (
-          <ColorPickerInput
-            value={styles[styleKey]}
-            onChange={(val) => onChange(styleKey, val)}
-          />
+          <div className="space-y-1">
+            <ColorPickerInput
+              value={currentValue || inheritedDefault}
+              onChange={(val) => onChange(styleKey, val)}
+            />
+            {hasInheritedDefault && !currentValue && (
+              <p className="text-xs text-muted-foreground">
+                Default: {inheritedDefault}
+              </p>
+            )}
+          </div>
         );
 
       case "borderRadius":
         return (
-          <SliderNumberInput
-            label=""
-            value={styles.borderRadius}
-            onChange={(val) => onChange("borderRadius", val)}
-            min={0}
-            max={50}
-          />
+          <div className="space-y-1">
+            <SliderNumberInput
+              label=""
+              value={currentValue ?? inheritedDefault ?? 0}
+              onChange={(val) => onChange("borderRadius", val)}
+              min={0}
+              max={50}
+            />
+            {hasInheritedDefault && currentValue === undefined && (
+              <p className="text-xs text-muted-foreground">
+                Default: {inheritedDefault}px
+              </p>
+            )}
+          </div>
         );
 
       case "borderWidth":
         return (
           <SliderNumberInput
             label=""
-            value={styles.borderWidth}
+            value={(currentValue as number | undefined) ?? 0}
             onChange={(val) => onChange("borderWidth", val)}
             min={0}
             max={10}
@@ -82,31 +101,45 @@ export function StyleControl({
 
       case "fontSize":
         return (
-          <SliderNumberInput
-            label=""
-            value={styles.fontSize}
-            onChange={(val) => onChange("fontSize", val)}
-            min={8}
-            max={72}
-          />
+          <div className="space-y-1">
+            <SliderNumberInput
+              label=""
+              value={currentValue ?? inheritedDefault ?? 14}
+              onChange={(val) => onChange("fontSize", val)}
+              min={8}
+              max={72}
+            />
+            {hasInheritedDefault && !currentValue && (
+              <p className="text-xs text-muted-foreground">
+                Default: {inheritedDefault}px
+              </p>
+            )}
+          </div>
         );
 
       case "lineHeight":
         return (
-          <SliderNumberInput
-            label=""
-            value={styles.lineHeight}
-            onChange={(val) => onChange("lineHeight", val)}
-            min={1}
-            max={3}
-            unit=""
-          />
+          <div className="space-y-1">
+            <SliderNumberInput
+              label=""
+              value={currentValue ?? inheritedDefault ?? 1.5}
+              onChange={(val) => onChange("lineHeight", val)}
+              min={1}
+              max={3}
+              unit=""
+            />
+            {hasInheritedDefault && !currentValue && (
+              <p className="text-xs text-muted-foreground">
+                Default: {inheritedDefault}
+              </p>
+            )}
+          </div>
         );
 
       case "borderStyle":
         return (
           <Select
-            value={styles.borderStyle || "solid"}
+            value={(currentValue as string | undefined) || "solid"}
             onValueChange={(val) =>
               onChange("borderStyle", val as BlockStyles["borderStyle"])
             }
@@ -146,7 +179,7 @@ export function StyleControl({
       case "fontWeight":
         return (
           <Select
-            value={styles.fontWeight?.toString() || "400"}
+            value={(currentValue as number | undefined)?.toString() || "400"}
             onValueChange={(val) => onChange("fontWeight", parseInt(val))}
           >
             <SelectTrigger>
@@ -190,7 +223,7 @@ export function StyleControl({
       case "textDecoration":
         return (
           <Select
-            value={styles.textDecoration || "none"}
+            value={(currentValue as string | undefined) || "none"}
             onValueChange={(val) =>
               onChange("textDecoration", val as BlockStyles["textDecoration"])
             }
@@ -224,7 +257,7 @@ export function StyleControl({
       case "padding":
         return (
           <PaddingControl
-            value={styles.padding}
+            value={currentValue as Padding | undefined}
             onChange={(val) => onChange("padding", val)}
           />
         );

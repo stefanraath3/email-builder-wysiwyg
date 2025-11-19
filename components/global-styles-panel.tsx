@@ -50,6 +50,15 @@ export function GlobalStylesPanel({
   const { template, updateGlobalStyles } = useEmailTemplate();
   const { globalStyles } = template;
 
+  // Ensure body exists (for backwards compatibility with old templates)
+  const bodyStyles = globalStyles.body || createDefaultGlobalStyles().body;
+
+  const updateBody = (updates: Partial<GlobalStyles["body"]>) => {
+    updateGlobalStyles({
+      body: { ...bodyStyles, ...updates },
+    });
+  };
+
   const updateContainer = (updates: Partial<GlobalStyles["container"]>) => {
     const currentPadding = globalStyles.container?.padding ?? DEFAULT_PADDING;
     updateGlobalStyles({
@@ -126,9 +135,9 @@ export function GlobalStylesPanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-[400px] bg-[hsl(var(--background))] overflow-y-auto"
+        className="w-[400px] bg-[hsl(var(--background))] overflow-y-auto p-6"
       >
-        <SheetHeader>
+        <SheetHeader className="mb-6">
           <div className="flex items-center justify-between">
             <SheetTitle>Global Styles</SheetTitle>
             <Button
@@ -143,12 +152,63 @@ export function GlobalStylesPanel({
           </div>
         </SheetHeader>
 
-        <div className="mt-6">
+        <div className="space-y-4">
           <Accordion type="single" collapsible className="w-full">
+            {/* Body Section */}
+            <AccordionItem value="body">
+              <AccordionTrigger>Body</AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <ColorPickerInput
+                    value={bodyStyles.backgroundColor}
+                    onChange={(color) => updateBody({ backgroundColor: color })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Alignment</Label>
+                  <Select
+                    value={bodyStyles.align}
+                    onValueChange={(val: "left" | "center" | "right") =>
+                      updateBody({ align: val })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="right">Right</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Border Color</Label>
+                  <ColorPickerInput
+                    value={bodyStyles.borderColor || "#000000"}
+                    onChange={(color) => updateBody({ borderColor: color })}
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
             {/* Container Section */}
             <AccordionItem value="container">
               <AccordionTrigger>Container</AccordionTrigger>
               <AccordionContent className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <ColorPickerInput
+                    value={globalStyles.container.backgroundColor || "#ffffff"}
+                    onChange={(color) =>
+                      updateContainer({ backgroundColor: color })
+                    }
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label>Width</Label>
                   <SliderNumberInput

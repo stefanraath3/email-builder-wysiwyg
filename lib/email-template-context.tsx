@@ -82,6 +82,15 @@ export function EmailTemplateProvider({
         if (stored) {
           const parsed = JSON.parse(stored);
           if (validateEmailTemplate(parsed)) {
+            // Migration: ensure body property exists (for backwards compatibility)
+            if (!parsed.globalStyles?.body) {
+              const defaults = createDefaultEmailTemplate();
+              parsed.globalStyles = {
+                ...defaults.globalStyles,
+                ...parsed.globalStyles,
+                body: defaults.globalStyles.body,
+              };
+            }
             return parsed;
           }
         }

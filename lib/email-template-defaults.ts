@@ -36,10 +36,16 @@ export const DEFAULT_PADDING = {
  */
 export function createDefaultGlobalStyles(): GlobalStyles {
   return {
+    body: {
+      backgroundColor: "#ffffff",
+      align: "center",
+      borderColor: "#000000",
+    },
     container: {
       width: DEFAULT_CONTAINER_WIDTH,
       align: "center",
       padding: DEFAULT_PADDING,
+      backgroundColor: "#ffffff",
     },
     typography: {
       fontFamily:
@@ -53,7 +59,7 @@ export function createDefaultGlobalStyles(): GlobalStyles {
       textDecoration: "underline",
     },
     image: {
-      borderRadius: 0,
+      borderRadius: 8,
     },
     button: {
       backgroundColor: "#2563eb",

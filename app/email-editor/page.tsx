@@ -11,9 +11,9 @@ export default function EmailEditorPage() {
   const [isStylesOpen, setIsStylesOpen] = useState(false);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
-      <div className="border-b border-border">
+      <div className="border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -59,18 +59,11 @@ export default function EmailEditorPage() {
         </div>
       </div>
 
-      {/* Editor Canvas */}
-      <div className="mx-auto w-full max-w-7xl px-6 py-8">
-        <div className="mx-auto" style={{ width: "600px" }}>
-          <EmailTemplateProvider>
-            <EmailTemplateEditor />
-            <GlobalStylesPanel
-              open={isStylesOpen}
-              onOpenChange={setIsStylesOpen}
-            />
-          </EmailTemplateProvider>
-        </div>
-      </div>
+      {/* Email Editor Content - EmailTemplateEditor now manages its own layout */}
+      <EmailTemplateProvider>
+        <EmailTemplateEditor />
+        <GlobalStylesPanel open={isStylesOpen} onOpenChange={setIsStylesOpen} />
+      </EmailTemplateProvider>
     </div>
   );
 }

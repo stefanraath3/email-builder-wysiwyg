@@ -66,6 +66,7 @@ export function EmailTemplateEditor() {
   const [isAttributesOpen, setIsAttributesOpen] = useState(false);
   const { editor } = useEditor();
   const editorWrapperRef = useRef<HTMLDivElement>(null);
+  const bodyWrapperRef = useRef<HTMLDivElement>(null);
 
   // Initialize content from template (only once)
   useEffect(() => {
@@ -93,13 +94,26 @@ export function EmailTemplateEditor() {
     };
   }, []);
 
-  // Apply global styles as CSS variables to editor wrapper
+  // Apply global styles as CSS variables to editor wrapper and body content
   useEffect(() => {
-    if (editorWrapperRef.current && template.globalStyles) {
-      applyGlobalStylesToElement(
-        editorWrapperRef.current,
-        template.globalStyles
-      );
+    if (template.globalStyles) {
+      // Apply to container wrapper
+      if (editorWrapperRef.current) {
+        applyGlobalStylesToElement(
+          editorWrapperRef.current,
+          template.globalStyles
+        );
+      }
+
+      // Apply to body content (sibling element with class email-body-content)
+      if (typeof window !== "undefined") {
+        const bodyContent = document.querySelector(
+          ".email-body-content"
+        ) as HTMLElement;
+        if (bodyContent) {
+          applyGlobalStylesToElement(bodyContent, template.globalStyles);
+        }
+      }
     }
   }, [template.globalStyles]);
 
@@ -138,138 +152,160 @@ export function EmailTemplateEditor() {
   }
 
   return (
-    <div className="email-editor-container w-full">
-      {/* Template Header (read-only for Phase 1) */}
-      <TemplateHeader />
+    <>
+      {/* Email Header - Separate row, not affected by body background */}
+      <div className="w-full bg-background border-b border-border py-4">
+        <div className="mx-auto max-w-7xl px-6">
+          <TemplateHeader />
+        </div>
+      </div>
 
-      {/* Editor Canvas */}
-      <div
-        ref={editorWrapperRef}
-        className="editor-canvas mt-6"
-        style={{
-          width: `${
-            template.globalStyles?.container?.width ?? DEFAULT_CONTAINER_WIDTH
-          }px`,
-          paddingTop: `${
-            template.globalStyles?.container?.padding?.top ??
-            DEFAULT_PADDING.top
-          }px`,
-          paddingRight: `${
-            template.globalStyles?.container?.padding?.right ??
-            DEFAULT_PADDING.right
-          }px`,
-          paddingBottom: `${
-            template.globalStyles?.container?.padding?.bottom ??
-            DEFAULT_PADDING.bottom
-          }px`,
-          paddingLeft: `${
-            template.globalStyles?.container?.padding?.left ??
-            DEFAULT_PADDING.left
-          }px`,
-        }}
-      >
-        <EditorRoot>
-          <EditorContent
-            initialContent={initialContent}
-            extensions={extensions}
-            className={cn(
-              "relative min-h-[500px] w-full border-muted bg-background sm:rounded-lg sm:border sm:shadow-lg",
-              getContainerAlignmentClass(
-                template.globalStyles?.container?.align ?? "center"
-              )
-            )}
-            editorProps={{
-              handleDOMEvents: {
-                keydown: (_view, event) => handleCommandNavigation(event),
-              },
-              handlePaste: (view, event) =>
-                handleImagePaste(view, event, uploadFn),
-              handleDrop: (view, event, _slice, moved) =>
-                handleImageDrop(view, event, moved, uploadFn),
-              attributes: {
-                class:
-                  "prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full",
-              },
-            }}
-            onUpdate={({ editor }) => {
-              handleUpdate(editor);
-            }}
-            slotAfter={<ImageResizer />}
-          >
-            {/* Slash Command Menu */}
-            <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all">
-              <EditorCommandEmpty className="px-2 text-muted-foreground">
-                No results
-              </EditorCommandEmpty>
-              <EditorCommandList>
-                {emailSuggestionItems.map((item, index) => {
-                  // Check if this is a category header
-                  const isCategoryHeader =
-                    (item as any).isCategoryHeader === true;
+      {/* Body Background - This is what gets the body backgroundColor */}
+      <div className="email-body-content flex-1 py-8">
+        {/* Editor Canvas - Container sits on Body */}
+        <div
+          ref={editorWrapperRef}
+          className="editor-canvas mx-auto"
+          style={{
+            width: `${
+              template.globalStyles?.container?.width ?? DEFAULT_CONTAINER_WIDTH
+            }px`,
+            paddingTop: `${
+              template.globalStyles?.container?.padding?.top ??
+              DEFAULT_PADDING.top
+            }px`,
+            paddingRight: `${
+              template.globalStyles?.container?.padding?.right ??
+              DEFAULT_PADDING.right
+            }px`,
+            paddingBottom: `${
+              template.globalStyles?.container?.padding?.bottom ??
+              DEFAULT_PADDING.bottom
+            }px`,
+            paddingLeft: `${
+              template.globalStyles?.container?.padding?.left ??
+              DEFAULT_PADDING.left
+            }px`,
+          }}
+        >
+          <EditorRoot>
+            <div
+              className={cn(
+                "relative min-h-[500px] w-full",
+                getContainerAlignmentClass(
+                  template.globalStyles?.container?.align ?? "center"
+                )
+              )}
+              style={{
+                backgroundColor:
+                  template.globalStyles?.container?.backgroundColor ??
+                  "#ffffff",
+              }}
+            >
+              <EditorContent
+                initialContent={initialContent}
+                extensions={extensions}
+                editorProps={{
+                  handleDOMEvents: {
+                    keydown: (_view, event) => handleCommandNavigation(event),
+                  },
+                  handlePaste: (view, event) =>
+                    handleImagePaste(view, event, uploadFn),
+                  handleDrop: (view, event, _slice, moved) =>
+                    handleImageDrop(view, event, moved, uploadFn),
+                  attributes: {
+                    class:
+                      "prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full",
+                  },
+                }}
+                onUpdate={({ editor }) => {
+                  handleUpdate(editor);
+                }}
+                slotAfter={<ImageResizer />}
+              >
+                {/* Slash Command Menu */}
+                <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all">
+                  <EditorCommandEmpty className="px-2 text-muted-foreground">
+                    No results
+                  </EditorCommandEmpty>
+                  <EditorCommandList>
+                    {emailSuggestionItems.map((item, index) => {
+                      // Check if this is a category header
+                      const isCategoryHeader =
+                        (item as any).isCategoryHeader === true;
 
-                  if (isCategoryHeader) {
-                    return (
-                      <div
-                        key={`category-${item.title}`}
-                        className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                      >
-                        {item.title}
-                      </div>
-                    );
-                  }
+                      if (isCategoryHeader) {
+                        return (
+                          <div
+                            key={`category-${item.title}`}
+                            className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                          >
+                            {item.title}
+                          </div>
+                        );
+                      }
 
-                  return (
-                    <EditorCommandItem
-                      value={item.title}
-                      onCommand={(val) => item.command?.(val)}
-                      className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
-                      key={`item-${index}-${item.title}`}
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-md border border-muted bg-background">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </div>
-                    </EditorCommandItem>
-                  );
-                })}
-              </EditorCommandList>
-            </EditorCommand>
+                      return (
+                        <EditorCommandItem
+                          value={item.title}
+                          onCommand={(val) => item.command?.(val)}
+                          className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
+                          key={`item-${index}-${item.title}`}
+                        >
+                          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-muted bg-background">
+                            {item.icon}
+                          </div>
+                          <div>
+                            <p className="font-medium">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.description}
+                            </p>
+                          </div>
+                        </EditorCommandItem>
+                      );
+                    })}
+                  </EditorCommandList>
+                </EditorCommand>
 
-            {/* Bubble Menu */}
-            <GenerativeMenuSwitch open={openAI} onOpenChange={setOpenAI}>
-              <Separator orientation="vertical" />
-              <EmailNodeSelector open={openNode} onOpenChange={setOpenNode} />
-              <Separator orientation="vertical" />
-              <LinkSelector open={openLink} onOpenChange={setOpenLink} />
-              <Separator orientation="vertical" />
-              <MathSelector />
-              <Separator orientation="vertical" />
-              <TextButtons />
-              <Separator orientation="vertical" />
-              <ColorSelector open={openColor} onOpenChange={setOpenColor} />
-            </GenerativeMenuSwitch>
+                {/* Bubble Menu */}
+                <GenerativeMenuSwitch open={openAI} onOpenChange={setOpenAI}>
+                  <Separator orientation="vertical" />
+                  <EmailNodeSelector
+                    open={openNode}
+                    onOpenChange={setOpenNode}
+                  />
+                  <Separator orientation="vertical" />
+                  <LinkSelector open={openLink} onOpenChange={setOpenLink} />
+                  <Separator orientation="vertical" />
+                  <MathSelector />
+                  <Separator orientation="vertical" />
+                  <TextButtons />
+                  <Separator orientation="vertical" />
+                  <ColorSelector open={openColor} onOpenChange={setOpenColor} />
+                </GenerativeMenuSwitch>
 
-            {/* Active Block Test Panel (Dev Only) - temporarily enabled for verification */}
-            {process.env.NODE_ENV === "development" && <ActiveBlockTestPanel />}
+                {/* Active Block Test Panel (Dev Only) - temporarily enabled for verification */}
+                {process.env.NODE_ENV === "development" && (
+                  <ActiveBlockTestPanel />
+                )}
 
-            {/* Attributes Panel - uses activeBlock from useActiveBlock hook */}
-            {/* Sheet uses portals so it can be rendered here but will portal to body */}
-            <AttributesPanelWrapper
-              isOpen={isAttributesOpen}
-              onOpenChange={setIsAttributesOpen}
-            />
-          </EditorContent>
-        </EditorRoot>
+                {/* Attributes Panel - uses activeBlock from useActiveBlock hook */}
+                {/* Sheet uses portals so it can be rendered here but will portal to body */}
+                <AttributesPanelWrapper
+                  isOpen={isAttributesOpen}
+                  onOpenChange={setIsAttributesOpen}
+                />
+              </EditorContent>
+            </div>
+          </EditorRoot>
+        </div>
       </div>
 
       {/* JSON Debug Panel */}
-      <EmailTemplateDebugPanel />
-    </div>
+      <div className="mx-auto max-w-7xl px-6 py-4">
+        <EmailTemplateDebugPanel />
+      </div>
+    </>
   );
 }
 
@@ -285,6 +321,7 @@ function AttributesPanelWrapper({
   onOpenChange: (open: boolean) => void;
 }) {
   const activeBlock = useActiveBlock();
+  const { template } = useEmailTemplate();
 
   return (
     <AttributesPanel
@@ -292,6 +329,7 @@ function AttributesPanelWrapper({
       onOpenChange={onOpenChange}
       blockUid={activeBlock?.uid ?? null}
       blockType={activeBlock?.type ?? null}
+      globalStyles={template.globalStyles}
     />
   );
 }

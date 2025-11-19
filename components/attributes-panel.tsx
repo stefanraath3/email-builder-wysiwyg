@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useEditor } from "@/lib/novel";
-import { findNodeByUid, updateNodeAttrsByUid } from "@/lib/email-blocks";
+import { findNodeByUid, updateNodeAttrsByUid, getDefaultStylesForBlockType } from "@/lib/email-blocks";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,7 @@ import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 import { Copy } from "lucide-react";
 import type { BlockStyles } from "@/types/block-styles";
+import type { GlobalStyles } from "@/types/email-template";
 import { AlignmentControl } from "./attributes-panel/alignment-control";
 import {
   StyleDropdownMenu,
@@ -28,24 +29,32 @@ type AttributesPanelProps = {
   onOpenChange: (open: boolean) => void;
   blockUid: string | null;
   blockType: string | null;
+  globalStyles: GlobalStyles;
 };
 
 /**
  * Interactive Attributes Panel (Resend-inspired)
  * - Alignment toggle at top for all blocks
  * - Styles section with + dropdown to add/remove style overrides
+ * - Shows inherited defaults from global styles
  */
 export function AttributesPanel({
   open,
   onOpenChange,
   blockUid,
   blockType,
+  globalStyles,
 }: AttributesPanelProps) {
   const { editor } = useEditor();
   const [styles, setStyles] = useState<BlockStyles>({});
   const [activeStyleKeys, setActiveStyleKeys] = useState<Set<StyleOption>>(
     new Set()
   );
+
+  // Get inherited defaults for this block type
+  const inheritedDefaults = blockType && globalStyles
+    ? getDefaultStylesForBlockType(blockType, globalStyles)
+    : {};
 
   // Load current styles from node and determine which style keys are active
   useEffect(() => {
@@ -228,6 +237,7 @@ export function AttributesPanel({
                         styles={styles}
                         onChange={updateStyle}
                         onRemove={() => handleRemoveStyle(styleKey)}
+                        inheritedDefault={inheritedDefaults[styleKey]}
                       />
                     ))}
                   </div>

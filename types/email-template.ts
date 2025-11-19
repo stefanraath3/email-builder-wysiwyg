@@ -25,7 +25,19 @@ export interface Padding {
 }
 
 /**
- * Container/body styling for the email template
+ * Body styling for the email template (outer background)
+ */
+export interface BodyStyles {
+  /** Body background color */
+  backgroundColor: string;
+  /** Body alignment (where content sits) */
+  align: "left" | "center" | "right";
+  /** Body border color */
+  borderColor?: string;
+}
+
+/**
+ * Container styling for the email template (inner content container)
  */
 export interface ContainerStyles {
   /** Container width in pixels (default: 600px) */
@@ -34,6 +46,8 @@ export interface ContainerStyles {
   align: "left" | "center" | "right";
   /** Container padding */
   padding: Padding;
+  /** Container background color */
+  backgroundColor?: string;
 }
 
 /**
@@ -110,7 +124,9 @@ export interface InlineCodeStyles {
  * Global styles applied to the entire email template
  */
 export interface GlobalStyles {
-  /** Container/body styles */
+  /** Body styles (outer background) */
+  body: BodyStyles;
+  /** Container styles (inner content container) */
   container: ContainerStyles;
   /** Typography defaults */
   typography: TypographyStyles;

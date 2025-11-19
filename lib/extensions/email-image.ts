@@ -40,17 +40,25 @@ export const EmailImage = TiptapImage.extend({
           return {};
         },
         renderHTML: (attributes) => {
-          if (
-            !attributes.styles ||
-            Object.keys(attributes.styles).length === 0
-          ) {
-            return {};
+          // Always render style attribute to apply global border radius via CSS variables
+          // even if no explicit styles are set
+          const styles = attributes.styles || {};
+          const hasExplicitStyles = Object.keys(styles).length > 0;
+
+          if (!hasExplicitStyles) {
+            // No explicit styles, but we still want CSS variables to apply
+            return {
+              "data-styles": JSON.stringify({}),
+              // Empty style tag allows CSS variable inheritance
+              style: "",
+            };
           }
+
           return {
-            "data-styles": JSON.stringify(attributes.styles),
+            "data-styles": JSON.stringify(styles),
             // Images need special treatment for alignment, so we pass
             // the isImage flag to convertBlockStylesToInlineCSS.
-            style: convertBlockStylesToInlineCSS(attributes.styles, {
+            style: convertBlockStylesToInlineCSS(styles, {
               isImage: true,
             }),
           };
