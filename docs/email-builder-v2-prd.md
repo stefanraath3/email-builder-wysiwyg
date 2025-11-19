@@ -2555,22 +2555,80 @@ Instead of a separate preview tab, we implemented a more elegant on-demand previ
 
 ### Phase 8: Email-Specific Block Nodes
 
-**Goal**: Implement custom nodes for email-specific blocks (Button, Divider, Section, etc.)
+**Goal**: Implement custom nodes for email-specific blocks leveraging React Email components
+
+**Status**: 📋 PENDING (Phase 7 Parts 1-5 complete, ready to start Phase 8)
+
+**Overview**: This phase adds email-specific blocks that don't exist in standard rich text editors. We'll leverage React Email's components (`Button`, `Section`, `Row`, `Column`, etc.) for email-safe output while providing an intuitive editing experience in TipTap.
+
+**React Email Components Available**:
+
+- `Button` - Email-safe CTA buttons
+- `Section` - Layout wrapper (like `<table>` for email)
+- `Row` - Horizontal layout container
+- `Column` - Column within a row
+- `Hr` - Horizontal rule (already implemented via `---`)
+- `Link`, `Text`, `Heading`, `Image` - Already using these
+- `Code Block`, `Code Inline`, `Markdown` - Already handled
+- `Container`, `HTML`, `Head`, `Preview` - Already in wrapper
+
+**Block Priority Order** (by complexity & dependencies):
+
+1. 🟢 **Button Block** (Part 1) - Easiest, clear use case
+2. 🟡 **HTML Block** (Part 2) - Simple atom node with textarea
+3. 🟡 **Unsubscribe Footer Block** (Part 3) - Text block with template
+4. 🟡 **Social Links Block** (Part 4) - Array of links with raster icons
+5. 🔴 **Section Block** (Part 5) - Container for layout (1-column first)
+6. 🔴 **Multi-column Section** (Part 6) - Section with 2+ columns (deferred)
+
+**Note on Divider**: Already implemented via `---` → `horizontalRule` node → React Email `<Hr>`. No new block needed.
+
+**Note on Variables**: Deferred to Phase 9 (inline node, different pattern)
+
+---
+
+#### **Phase 8 Architecture Patterns**
+
+Each email block requires **4 touchpoints**:
+
+1. **TipTap Extension** (`/lib/extensions/email-*.ts`)
+   - Node definition with attributes (uid, styles, block-specific attrs)
+   - Optional ReactNodeViewRenderer for custom editing UI
+   - parseHTML/renderHTML for editor display
+
+2. **Slash Command** (`/components/email-slash-command.tsx`)
+   - Replace placeholder with real insertion command
+   - Wire to extension's insert command
+
+3. **Email Transformer** (`/lib/email-transform/nodes.tsx`)
+   - Add `case` statement for node type
+   - Map to React Email component with proper styling
+
+4. **Attributes Panel** (`/components/attributes-panel.tsx`)
+   - Add block-specific fields (if needed beyond standard styles)
+   - URL inputs, array editors, toggles, etc.
+
+---
+
+#### **Part 1: Button Block** 🟢 EASIEST (Start Here)
+
+**Complexity**: Low | **Estimated**: 3-4 hours | **Dependencies**: None
+
+**Why first?** Simple atom node, clear use case, React Email has native `<Button>` component, good learning block for the pattern.
 
 **Deliverables**:
 
-1. **Button Block**:
+1. **TipTap Extension** (`/lib/extensions/email-button.ts`):
 
    ```ts
-   // /lib/extensions/button-block.ts
-   const ButtonBlock = Node.create({
+   export const EmailButton = Node.create({
      name: "buttonBlock",
      group: "block",
      atom: true,
+     draggable: true,
 
      addAttributes() {
        return {
-         id: { default: null },
          text: { default: "Click me" },
          href: { default: "#" },
          styles: { default: {} },
@@ -2582,270 +2640,914 @@ Instead of a separate preview tab, we implemented a more elegant on-demand previ
      },
 
      renderHTML({ node, HTMLAttributes }) {
+       const styles = convertBlockStylesToInlineCSS(node.attrs.styles);
        return [
          "div",
          mergeAttributes(HTMLAttributes, {
            "data-type": "button-block",
-           style: getButtonStyles(node.attrs.styles),
+           style: styles,
          }),
-         ["a", { href: node.attrs.href }, node.attrs.text],
+         [
+           "a",
+           { href: node.attrs.href, onclick: "return false;" },
+           node.attrs.text,
+         ],
        ];
      },
 
-     addNodeView() {
-       return ReactNodeViewRenderer(ButtonBlockView);
+     addCommands() {
+       return {
+         insertButton:
+           (attrs) =>
+           ({ commands }) => {
+             return commands.insertContent({
+               type: this.name,
+               attrs,
+             });
+           },
+       };
      },
    });
    ```
 
-   Button NodeView (for editing):
+2. **Slash Command Update** (`/components/email-slash-command.tsx`):
 
-   ```tsx
-   const ButtonBlockView = ({ node, updateAttributes }: NodeViewProps) => {
-     const [editing, setEditing] = useState(false);
-
-     return (
-       <NodeViewWrapper>
-         {editing ? (
-           <div>
-             <Input
-               value={node.attrs.text}
-               onChange={(e) => updateAttributes({ text: e.target.value })}
-             />
-             <Input
-               value={node.attrs.href}
-               onChange={(e) => updateAttributes({ href: e.target.value })}
-             />
-             <Button onClick={() => setEditing(false)}>Done</Button>
-           </div>
-         ) : (
-           <div onDoubleClick={() => setEditing(true)}>
-             <a
-               href={node.attrs.href}
-               style={getButtonStyles(node.attrs.styles)}
-               onClick={(e) => e.preventDefault()}
-             >
-               {node.attrs.text}
-             </a>
-           </div>
-         )}
-       </NodeViewWrapper>
-     );
-   };
+   ```ts
+   {
+     title: "Button",
+     description: "Add a call-to-action button.",
+     searchTerms: ["button", "cta", "link"],
+     icon: <MousePointerClick size={18} />,
+     command: ({ editor, range }) => {
+       editor
+         .chain()
+         .focus()
+         .deleteRange(range)
+         .insertButton({
+           text: "Click me",
+           href: "#",
+         })
+         .run();
+     },
+   }
    ```
 
-   React Email transformation:
+3. **Email Transformer** (`/lib/email-transform/nodes.tsx`):
 
    ```tsx
    case 'buttonBlock':
+     const buttonStyles = getNodeStyles(node, globalStyles, 'buttonBlock');
      return (
-       <ReactEmail.Button
-         key={idx}
-         href={node.attrs.href}
-         style={getNodeStyles(node, globalStyles)}
+       <Button
+         key={key}
+         href={node.attrs?.href || "#"}
+         style={buttonStyles}
        >
-         {node.attrs.text}
-       </ReactEmail.Button>
+         {node.attrs?.text || "Click me"}
+       </Button>
      );
    ```
 
-2. **Divider Block**:
+4. **Attributes Panel Extension** (`/components/attributes-panel.tsx`):
+   - Add text input field for button text
+   - Add URL input field with validation
+   - Standard styles section (background, text color, padding, border radius, alignment)
+   - Inherits from global button styles by default
+
+5. **Add to Email Extensions** (`/components/email-extensions.ts`):
 
    ```ts
-   // /lib/extensions/divider-block.ts
-   const DividerBlock = Node.create({
-     name: "dividerBlock",
-     group: "block",
-     atom: true,
+   import { EmailButton } from "@/lib/extensions/email-button";
 
-     addAttributes() {
-       return {
-         id: { default: null },
-         styles: { default: {} },
-       };
-     },
-
-     renderHTML({ node, HTMLAttributes }) {
-       return [
-         "hr",
-         mergeAttributes(HTMLAttributes, {
-           style: getDividerStyles(node.attrs.styles),
-         }),
-       ];
-     },
-   });
+   export const emailExtensions = [
+     // ... existing extensions
+     EmailButton,
+   ];
    ```
 
-   React Email transformation:
+**Key decisions**:
 
-   ```tsx
-   case 'dividerBlock':
-     return (
-       <ReactEmail.Hr
-         key={idx}
-         style={getNodeStyles(node, globalStyles)}
-       />
-     );
-   ```
+- ✅ Button text editable via attributes panel (not inline)
+- ✅ Uses React Email `<Button>` component for transformation
+- ✅ Inherits from `globalStyles.button` defaults
+- ✅ Block-level override for per-button customization
+- ✅ No NodeView needed - simple renderHTML is sufficient
 
-3. **Section Block** (supports columns):
+**Success criteria**:
+
+- ✅ Insert button via `/button`
+- ✅ Edit text + URL in attributes panel
+- ✅ Style button (background, text color, padding, border radius)
+- ✅ Button inherits global button styles
+- ✅ Exports to React Email `<Button>` with proper href and styling
+- ✅ Button is draggable and has attributes handle
+- ✅ Clicking button in editor doesn't navigate (preventDefault)
+
+**Files to create**:
+
+- `/lib/extensions/email-button.ts` - Button extension
+
+**Files to modify**:
+
+- `/components/email-slash-command.tsx` - Add button command
+- `/lib/email-transform/nodes.tsx` - Add buttonBlock case
+- `/components/attributes-panel.tsx` - Add text/href inputs when blockType === 'buttonBlock'
+- `/components/email-extensions.ts` - Import and add EmailButton
+
+---
+
+#### **Part 2: HTML Block** 🟡 MEDIUM
+
+**Complexity**: Medium | **Estimated**: 3-4 hours | **Dependencies**: None
+
+**Why second?** Simple atom node, NodeView practice before complex blocks, useful utility block.
+
+**Deliverables**:
+
+1. **TipTap Extension** (`/lib/extensions/email-html-block.ts`):
 
    ```ts
-   // /lib/extensions/section-block.ts
-   const SectionBlock = Node.create({
-     name: "sectionBlock",
-     group: "block",
-     content: "block+",
-
-     addAttributes() {
-       return {
-         id: { default: null },
-         columns: { default: 1 }, // 1 or 2
-         styles: { default: {} },
-       };
-     },
-
-     renderHTML({ node, HTMLAttributes }) {
-       return [
-         "div",
-         mergeAttributes(HTMLAttributes, {
-           "data-type": "section-block",
-           "data-columns": node.attrs.columns,
-           style: getSectionStyles(node.attrs.styles),
-         }),
-         0, // content hole
-       ];
-     },
-   });
-   ```
-
-   React Email transformation (using table-based layout):
-
-   ```tsx
-   case 'sectionBlock':
-     const columns = node.attrs.columns || 1;
-     return (
-       <ReactEmail.Section key={idx} style={getNodeStyles(node, globalStyles)}>
-         <ReactEmail.Row>
-           {/* Split content into columns */}
-           {transformSectionContent(node.content, columns, globalStyles)}
-         </ReactEmail.Row>
-       </ReactEmail.Section>
-     );
-   ```
-
-4. **Social Links Block**:
-
-   ```ts
-   const SocialLinksBlock = Node.create({
-     name: "socialLinksBlock",
-     group: "block",
-     atom: true,
-
-     addAttributes() {
-       return {
-         id: { default: null },
-         links: {
-           default: [
-             { platform: "twitter", url: "" },
-             { platform: "facebook", url: "" },
-             { platform: "linkedin", url: "" },
-           ],
-         },
-         styles: { default: {} },
-       };
-     },
-   });
-   ```
-
-5. **Unsubscribe Footer Block**:
-
-   ```ts
-   const UnsubscribeFooterBlock = Node.create({
-     name: "unsubscribeFooterBlock",
-     group: "block",
-     content: "inline*",
-
-     addAttributes() {
-       return {
-         id: { default: null },
-         unsubscribeUrl: { default: "{{unsubscribe_url}}" },
-         styles: { default: {} },
-       };
-     },
-   });
-   ```
-
-6. **HTML Block**:
-
-   ```ts
-   const HTMLBlock = Node.create({
+   export const EmailHTMLBlock = Node.create({
      name: "htmlBlock",
      group: "block",
      atom: true,
+     draggable: true,
 
      addAttributes() {
        return {
-         id: { default: null },
          html: { default: "" },
        };
+     },
+
+     parseHTML() {
+       return [{ tag: 'div[data-type="html-block"]' }];
+     },
+
+     renderHTML({ node }) {
+       return [
+         "div",
+         {
+           "data-type": "html-block",
+           class: "html-block-preview",
+         },
+         `<!-- HTML Block: ${node.attrs.html.substring(0, 50)}... -->`,
+       ];
      },
 
      addNodeView() {
        return ReactNodeViewRenderer(HTMLBlockView);
      },
-   });
 
-   // View with code editor (monaco/codemirror)
-   const HTMLBlockView = ({ node, updateAttributes }: NodeViewProps) => {
+     addCommands() {
+       return {
+         insertHTMLBlock:
+           () =>
+           ({ commands }) => {
+             return commands.insertContent({
+               type: this.name,
+               attrs: { html: "" },
+             });
+           },
+       };
+     },
+   });
+   ```
+
+2. **NodeView** (`/components/node-views/html-block-view.tsx`):
+
+   ```tsx
+   export const HTMLBlockView = ({ node, updateAttributes }: NodeViewProps) => {
      return (
        <NodeViewWrapper>
-         <textarea
-           value={node.attrs.html}
-           onChange={(e) => updateAttributes({ html: e.target.value })}
-           className="font-mono"
-         />
+         <div className="border-2 border-dashed border-muted rounded p-4">
+           <div className="flex items-center gap-2 mb-2">
+             <Code2 className="h-4 w-4 text-muted-foreground" />
+             <span className="text-sm font-medium">HTML Block</span>
+           </div>
+           <Textarea
+             value={node.attrs.html}
+             onChange={(e) => updateAttributes({ html: e.target.value })}
+             placeholder="Paste your HTML code here..."
+             className="font-mono text-sm min-h-[100px]"
+           />
+           {node.attrs.html && (
+             <div className="mt-2 text-xs text-muted-foreground">
+               {node.attrs.html.length} characters
+             </div>
+           )}
+         </div>
        </NodeViewWrapper>
      );
    };
    ```
 
-7. Update slash command with real nodes:
-   - Wire LAYOUT category items to new nodes
-   - Remove placeholder implementations
+3. **Email Transformer** (`/lib/email-transform/nodes.tsx`):
 
-8. Add block-specific attributes panels:
-   - ButtonBlock: text, href, background, text color, padding, border radius
-   - SectionBlock: columns (1 or 2), background, padding
-   - SocialLinksBlock: add/remove/edit links, icon size, spacing
-   - UnsubscribeFooterBlock: text content, URL, styling
-   - HTMLBlock: raw HTML editor with syntax highlighting
+   ```tsx
+   case 'htmlBlock':
+     if (!node.attrs?.html) return null;
+     return (
+       <div
+         key={key}
+         dangerouslySetInnerHTML={{ __html: node.attrs.html }}
+       />
+     );
+   ```
 
-**Success Criteria**:
+4. **Slash Command Update**:
+   ```ts
+   {
+     title: "HTML",
+     description: "Insert raw HTML code.",
+     searchTerms: ["html", "code", "raw", "custom"],
+     icon: <Code2 size={18} />,
+     command: ({ editor, range }) => {
+       editor
+         .chain()
+         .focus()
+         .deleteRange(range)
+         .insertHTMLBlock()
+         .run();
+     },
+   }
+   ```
 
-- Can insert Button block, edit text & URL, style it
-- Button exports correctly to React Email `<Button>`
-- Divider block renders as HR and exports correctly
-- Section block supports 1-2 columns
-- Social links block allows editing platforms and URLs
-- Unsubscribe footer block includes unsubscribe link
-- HTML block allows raw HTML input
-- All blocks draggable and have attributes panels
-- All blocks export correctly to React Email
+**Key decisions**:
 
-**Files to Create**:
+- ✅ Use simple `<Textarea>` (no Monaco editor for Phase 8, can upgrade later)
+- ✅ NO HTML sanitization - user responsibility
+- ✅ Show character count for awareness
+- ✅ Visual distinction (dashed border, monospace font)
+- ✅ Outputs raw HTML with `dangerouslySetInnerHTML`
+- ✅ No preview in editor (show in Test Transform modal)
 
-- `/lib/extensions/button-block.ts` + NodeView
-- `/lib/extensions/divider-block.ts`
-- `/lib/extensions/section-block.ts` + NodeView
-- `/lib/extensions/social-links-block.ts` + NodeView
-- `/lib/extensions/unsubscribe-footer-block.ts` + NodeView
-- `/lib/extensions/html-block.ts` + NodeView
-- `/components/attributes-panel/button-attributes.tsx`
-- `/components/attributes-panel/section-attributes.tsx`
-- etc.
-- Update transformer to handle all new node types
-- Update slash command
+**Success criteria**:
+
+- ✅ Insert HTML block via `/html`
+- ✅ Edit raw HTML in textarea
+- ✅ HTML exports as-is (wrapped in div)
+- ✅ Block is draggable
+- ✅ Character count updates
+- ✅ Visual distinction in editor
+
+**Files to create**:
+
+- `/lib/extensions/email-html-block.ts` - Extension
+- `/components/node-views/html-block-view.tsx` - NodeView component
+
+**Files to modify**:
+
+- `/components/email-slash-command.tsx` - Add HTML command
+- `/lib/email-transform/nodes.tsx` - Add htmlBlock case
+- `/components/email-extensions.ts` - Add EmailHTMLBlock
+
+---
+
+#### **Part 3: Unsubscribe Footer Block** 🟡 MEDIUM
+
+**Complexity**: Medium | **Estimated**: 3-4 hours | **Dependencies**: None
+
+**Why third?** Simple content block with default template, good for practicing text + variable pattern.
+
+**Deliverables**:
+
+1. **TipTap Extension** (`/lib/extensions/email-unsubscribe-footer.ts`):
+
+   ```ts
+   export const EmailUnsubscribeFooter = Node.create({
+     name: "unsubscribeFooterBlock",
+     group: "block",
+     content: "inline*",
+     draggable: true,
+
+     addAttributes() {
+       return {
+         styles: { default: {} },
+       };
+     },
+
+     parseHTML() {
+       return [{ tag: 'div[data-type="unsubscribe-footer"]' }];
+     },
+
+     renderHTML({ HTMLAttributes }) {
+       return [
+         "div",
+         mergeAttributes(HTMLAttributes, {
+           "data-type": "unsubscribe-footer",
+           class: "unsubscribe-footer",
+         }),
+         0, // content hole
+       ];
+     },
+
+     addCommands() {
+       return {
+         insertUnsubscribeFooter:
+           () =>
+           ({ commands }) => {
+             return commands.insertContent({
+               type: this.name,
+               content: [
+                 {
+                   type: "text",
+                   text: "You're receiving this email because you subscribed to our newsletter. ",
+                 },
+                 {
+                   type: "text",
+                   marks: [
+                     { type: "link", attrs: { href: "{{unsubscribe_url}}" } },
+                   ],
+                   text: "Unsubscribe",
+                 },
+               ],
+             });
+           },
+       };
+     },
+   });
+   ```
+
+2. **CSS Styling** (`/styles/prosemirror.css`):
+
+   ```css
+   .unsubscribe-footer {
+     font-size: 12px;
+     color: #666;
+     text-align: center;
+     padding: 16px 0;
+     border-top: 1px solid #eee;
+     margin-top: 32px;
+   }
+   ```
+
+3. **Email Transformer** (`/lib/email-transform/nodes.tsx`):
+
+   ```tsx
+   case 'unsubscribeFooterBlock':
+     const footerStyles = {
+       ...getNodeStyles(node, globalStyles, 'unsubscribeFooterBlock'),
+       fontSize: '12px',
+       color: '#666666',
+       textAlign: 'center' as const,
+       paddingTop: '16px',
+       paddingBottom: '16px',
+       borderTop: '1px solid #eeeeee',
+       marginTop: '32px',
+     };
+     return (
+       <Text key={key} style={footerStyles}>
+         {transformInlineContent(node.content, globalStyles)}
+       </Text>
+     );
+   ```
+
+4. **Slash Command Update**:
+   ```ts
+   {
+     title: "Unsubscribe Footer",
+     description: "Add unsubscribe footer with link.",
+     searchTerms: ["unsubscribe", "footer", "opt-out"],
+     icon: <UserMinus size={18} />,
+     command: ({ editor, range }) => {
+       editor
+         .chain()
+         .focus()
+         .deleteRange(range)
+         .insertUnsubscribeFooter()
+         .run();
+     },
+   }
+   ```
+
+**Key decisions**:
+
+- ✅ Content node (editable inline text)
+- ✅ Default template includes {{unsubscribe_url}} variable placeholder
+- ✅ Fully editable by user (can change text)
+- ✅ Special styling (small, gray, centered, top border)
+- ✅ Inherits from global text styles but overrides size/color
+- ✅ Warn if missing unsubscribe link (Phase 10 linting)
+
+**Success criteria**:
+
+- ✅ Insert footer via `/unsubscribe`
+- ✅ Default text with unsubscribe link populated
+- ✅ User can edit footer text inline
+- ✅ Footer styled distinctly (small, gray, centered)
+- ✅ Link in footer works (marks with href)
+- ✅ Exports with proper styling
+
+**Files to create**:
+
+- `/lib/extensions/email-unsubscribe-footer.ts` - Extension
+
+**Files to modify**:
+
+- `/components/email-slash-command.tsx` - Add unsubscribe footer command
+- `/lib/email-transform/nodes.tsx` - Add unsubscribeFooterBlock case
+- `/styles/prosemirror.css` - Add footer styling
+- `/components/email-extensions.ts` - Add EmailUnsubscribeFooter
+
+---
+
+#### **Part 4: Social Links Block** 🟡 MEDIUM
+
+**Complexity**: Medium | **Estimated**: 4-5 hours | **Dependencies**: None, but need icon assets
+
+**Why fourth?** Requires managing array of links + icon rendering with raster images (email-safe).
+
+**Deliverables**:
+
+1. **Icon Assets** (create `/public/social-icons/`):
+   - PNG files at 32x32px and 64x64px (retina): `twitter.png`, `twitter@2x.png`
+   - Platforms: Twitter/X, Facebook, LinkedIn, Instagram, GitHub, YouTube
+   - Use simple, monochrome icons with transparency
+   - Host locally (don't use external CDN for email safety)
+
+2. **TipTap Extension** (`/lib/extensions/email-social-links.ts`):
+
+   ```ts
+   export const EmailSocialLinks = Node.create({
+     name: "socialLinksBlock",
+     group: "block",
+     atom: true,
+     draggable: true,
+
+     addAttributes() {
+       return {
+         links: {
+           default: [
+             { platform: "twitter", url: "", enabled: false },
+             { platform: "facebook", url: "", enabled: false },
+             { platform: "linkedin", url: "", enabled: false },
+             { platform: "instagram", url: "", enabled: false },
+           ],
+         },
+         iconSize: { default: 32 },
+         spacing: { default: 16 },
+         styles: { default: {} },
+       };
+     },
+
+     parseHTML() {
+       return [{ tag: 'div[data-type="social-links"]' }];
+     },
+
+     renderHTML({ node }) {
+       const enabled = node.attrs.links.filter((l: any) => l.enabled);
+       return [
+         "div",
+         {
+           "data-type": "social-links",
+           class: "social-links-block",
+         },
+         `📱 Social Links (${enabled.length} enabled)`,
+       ];
+     },
+
+     addNodeView() {
+       return ReactNodeViewRenderer(SocialLinksView);
+     },
+
+     addCommands() {
+       return {
+         insertSocialLinks:
+           () =>
+           ({ commands }) => {
+             return commands.insertContent({
+               type: this.name,
+             });
+           },
+       };
+     },
+   });
+   ```
+
+3. **NodeView** (`/components/node-views/social-links-view.tsx`):
+
+   ```tsx
+   export const SocialLinksView = ({
+     node,
+     updateAttributes,
+   }: NodeViewProps) => {
+     const { links, iconSize, spacing } = node.attrs;
+
+     const updateLink = (index: number, updates: Partial<SocialLink>) => {
+       const newLinks = [...links];
+       newLinks[index] = { ...newLinks[index], ...updates };
+       updateAttributes({ links: newLinks });
+     };
+
+     return (
+       <NodeViewWrapper>
+         <div className="border-2 border-dashed border-muted rounded p-4">
+           <div className="flex items-center gap-2 mb-3">
+             <Share2 className="h-4 w-4 text-muted-foreground" />
+             <span className="text-sm font-medium">Social Links</span>
+           </div>
+
+           <div className="space-y-2">
+             {links.map((link: any, idx: number) => (
+               <div key={link.platform} className="flex items-center gap-2">
+                 <Switch
+                   checked={link.enabled}
+                   onCheckedChange={(enabled) => updateLink(idx, { enabled })}
+                 />
+                 <span className="w-24 text-sm capitalize">
+                   {link.platform}
+                 </span>
+                 {link.enabled && (
+                   <Input
+                     value={link.url}
+                     onChange={(e) => updateLink(idx, { url: e.target.value })}
+                     placeholder={`https://${link.platform}.com/...`}
+                     className="flex-1"
+                   />
+                 )}
+               </div>
+             ))}
+           </div>
+
+           <Separator className="my-3" />
+
+           <div className="flex gap-4">
+             <div className="flex-1">
+               <Label className="text-xs">Icon Size</Label>
+               <Input
+                 type="number"
+                 value={iconSize}
+                 onChange={(e) =>
+                   updateAttributes({ iconSize: parseInt(e.target.value) })
+                 }
+                 min={24}
+                 max={48}
+               />
+             </div>
+             <div className="flex-1">
+               <Label className="text-xs">Spacing</Label>
+               <Input
+                 type="number"
+                 value={spacing}
+                 onChange={(e) =>
+                   updateAttributes({ spacing: parseInt(e.target.value) })
+                 }
+                 min={8}
+                 max={32}
+               />
+             </div>
+           </div>
+         </div>
+       </NodeViewWrapper>
+     );
+   };
+   ```
+
+4. **Email Transformer** (`/lib/email-transform/nodes.tsx`):
+
+   ```tsx
+   case 'socialLinksBlock':
+     const enabledLinks = node.attrs?.links?.filter((l: any) => l.enabled && l.url) || [];
+     if (enabledLinks.length === 0) return null;
+
+     const iconSize = node.attrs?.iconSize || 32;
+     const spacing = node.attrs?.spacing || 16;
+     const socialStyles = getNodeStyles(node, globalStyles, 'socialLinksBlock');
+
+     return (
+       <Section key={key} style={socialStyles}>
+         <Row>
+           {enabledLinks.map((link: any, idx: number) => (
+             <Column key={idx}>
+               <Link href={link.url}>
+                 <Img
+                   src={`/social-icons/${link.platform}.png`}
+                   alt={link.platform}
+                   width={iconSize}
+                   height={iconSize}
+                   style={{
+                     marginLeft: idx === 0 ? '0' : `${spacing/2}px`,
+                     marginRight: idx === enabledLinks.length - 1 ? '0' : `${spacing/2}px`,
+                   }}
+                 />
+               </Link>
+             </Column>
+           ))}
+         </Row>
+       </Section>
+     );
+   ```
+
+5. **Slash Command Update**:
+   ```ts
+   {
+     title: "Social Links",
+     description: "Add social media links with icons.",
+     searchTerms: ["social", "icons", "links", "twitter", "facebook"],
+     icon: <Share2 size={18} />,
+     command: ({ editor, range }) => {
+       editor
+         .chain()
+         .focus()
+         .deleteRange(range)
+         .insertSocialLinks()
+         .run();
+     },
+   }
+   ```
+
+**Key decisions**:
+
+- ✅ Use PNG raster images for icons (SVG has poor email support)
+- ✅ Host icons locally in `/public/social-icons/`
+- ✅ Toggle-based UI (enable/disable each platform)
+- ✅ URL input only shows when platform enabled
+- ✅ Horizontal row layout using React Email `<Row>` + `<Column>`
+- ✅ Configurable icon size and spacing
+- ✅ Icons centered by default
+- ✅ Skip disabled platforms in export
+
+**Icon creation notes**:
+
+- Use simple, monochrome designs (black or dark gray)
+- 32x32px base size, 64x64px for @2x retina
+- PNG with transparency
+- Consistent style across all platforms
+- Sources: [Iconoir](https://iconoir.com/), [Lucide](https://lucide.dev/), or [Font Awesome](https://fontawesome.com/)
+
+**Success criteria**:
+
+- ✅ Insert social links via `/social`
+- ✅ Toggle platforms on/off
+- ✅ Edit URLs for enabled platforms
+- ✅ Configure icon size and spacing
+- ✅ Icons render in email preview
+- ✅ Exports using React Email `<Section>/<Row>/<Column>` layout
+- ✅ Icons link correctly to social profiles
+- ✅ Only enabled links appear in export
+
+**Files to create**:
+
+- `/lib/extensions/email-social-links.ts` - Extension
+- `/components/node-views/social-links-view.tsx` - NodeView
+- `/public/social-icons/*.png` - Icon assets (12+ files)
+
+**Files to modify**:
+
+- `/components/email-slash-command.tsx` - Add social links command
+- `/lib/email-transform/nodes.tsx` - Add socialLinksBlock case
+- `/components/email-extensions.ts` - Add EmailSocialLinks
+
+---
+
+#### **Part 5: Section Block (1-column)** 🔴 COMPLEX
+
+**Complexity**: High | **Estimated**: 5-6 hours | **Dependencies**: Must understand React Email `<Section>`
+
+**Why fifth?** Container node with nested content - most complex pattern yet.
+
+**Deliverables**:
+
+1. **TipTap Extension** (`/lib/extensions/email-section.ts`):
+
+   ```ts
+   export const EmailSection = Node.create({
+     name: "sectionBlock",
+     group: "block",
+     content: "block+",
+     draggable: true,
+     isolating: true,
+
+     addAttributes() {
+       return {
+         styles: { default: {} },
+       };
+     },
+
+     parseHTML() {
+       return [{ tag: 'div[data-type="section-block"]' }];
+     },
+
+     renderHTML({ HTMLAttributes }) {
+       const styles = convertBlockStylesToInlineCSS(node.attrs.styles);
+       return [
+         "div",
+         mergeAttributes(HTMLAttributes, {
+           "data-type": "section-block",
+           class: "section-block",
+           style: styles,
+         }),
+         0, // content hole
+       ];
+     },
+
+     addCommands() {
+       return {
+         insertSection:
+           () =>
+           ({ commands }) => {
+             return commands.insertContent({
+               type: this.name,
+               content: [
+                 {
+                   type: "paragraph",
+                   content: [{ type: "text", text: "Section content..." }],
+                 },
+               ],
+             });
+           },
+       };
+     },
+
+     addKeyboardShortcuts() {
+       return {
+         // Enter at end exits section
+         Enter: ({ editor }) => {
+           const { $from, $to } = editor.state.selection;
+           if (
+             $from.parent.type.name === this.name &&
+             $to.pos === $from.end() - 1
+           ) {
+             return editor.commands.exitCode();
+           }
+           return false;
+         },
+         // Backspace at start merges with previous
+         Backspace: ({ editor }) => {
+           const { $from } = editor.state.selection;
+           if (
+             $from.parent.type.name === this.name &&
+             $from.parentOffset === 0
+           ) {
+             return editor.commands.lift(this.name);
+           }
+           return false;
+         },
+       };
+     },
+   });
+   ```
+
+2. **CSS Styling** (`/styles/prosemirror.css`):
+
+   ```css
+   .section-block {
+     border: 2px dashed hsl(var(--muted));
+     border-radius: 4px;
+     padding: 16px;
+     margin: 16px 0;
+     min-height: 60px;
+   }
+
+   .section-block:hover {
+     border-color: hsl(var(--primary));
+   }
+   ```
+
+3. **Email Transformer** (`/lib/email-transform/nodes.tsx`):
+
+   ```tsx
+   case 'sectionBlock':
+     const sectionStyles = getNodeStyles(node, globalStyles, 'sectionBlock');
+     return (
+       <Section key={key} style={sectionStyles}>
+         {node.content?.map((child, i) => transformNode(child, i, globalStyles))}
+       </Section>
+     );
+   ```
+
+4. **Slash Command Update**:
+   ```ts
+   {
+     title: "Section",
+     description: "Add a layout section container.",
+     searchTerms: ["section", "container", "group", "layout"],
+     icon: <Layout size={18} />,
+     command: ({ editor, range }) => {
+       editor
+         .chain()
+         .focus()
+         .deleteRange(range)
+         .insertSection()
+         .run();
+     },
+   }
+   ```
+
+**Key decisions**:
+
+- ✅ Content node with `content: "block+"` (can contain any blocks)
+- ✅ `isolating: true` prevents content from merging out
+- ✅ Visual boundary (dashed border) in editor
+- ✅ Keyboard shortcuts for enter/backspace navigation
+- ✅ Starts with single paragraph by default
+- ✅ Uses React Email `<Section>` wrapper (table-based layout)
+- ✅ 1-column only for Part 5 (multi-column in Part 6)
+- ✅ Sections NOT nestable (flat structure only)
+- ✅ Background, padding, border styling supported
+
+**Success criteria**:
+
+- ✅ Insert section via `/section`
+- ✅ Add multiple blocks inside section
+- ✅ Drag blocks in/out of section
+- ✅ Visual boundary visible in editor
+- ✅ Enter at end exits section
+- ✅ Backspace at start lifts content
+- ✅ Section background/padding styles work
+- ✅ Exports as React Email `<Section>` wrapper
+- ✅ Nested content renders correctly
+
+**Files to create**:
+
+- `/lib/extensions/email-section.ts` - Extension
+
+**Files to modify**:
+
+- `/components/email-slash-command.tsx` - Add section command
+- `/lib/email-transform/nodes.tsx` - Add sectionBlock case
+- `/styles/prosemirror.css` - Add section styling
+- `/components/email-extensions.ts` - Add EmailSection
+
+---
+
+#### **Part 6: Multi-column Section** 🔴 VERY COMPLEX (DEFERRED)
+
+**Complexity**: Very High | **Estimated**: 6-8 hours | **Dependencies**: Part 5 complete
+
+**Why last?** Requires column splitting logic + complex React Email layout with `<Row>` + `<Column>`.
+
+**Status**: **DEFERRED** - Can be added in Phase 8.5 or Phase 11 if needed.
+
+**Approach** (for future reference):
+
+- Extend `sectionBlock` with `columns` attribute (1, 2, or 3)
+- Add UI toggle in attributes panel to switch column count
+- Split `node.content` into column groups (manual drag between columns)
+- Use React Email `<Row>` + `<Column>` components
+- Equal column widths only for Phase 8
+- Mobile: Stack columns automatically (email client responsibility)
+
+**Rationale for deferral**:
+
+- Parts 1-5 provide fully functional email builder
+- Multi-column is advanced feature, not MVP requirement
+- Significant complexity in content management + UX
+- React Email handles column layout well once content is split
+
+---
+
+### Phase 8 Summary
+
+**Parts Breakdown**:
+
+1. 🟢 **Button Block** (Part 1) - 3-4 hours
+2. 🟡 **HTML Block** (Part 2) - 3-4 hours
+3. 🟡 **Unsubscribe Footer** (Part 3) - 3-4 hours
+4. 🟡 **Social Links** (Part 4) - 4-5 hours (includes icon creation)
+5. 🔴 **Section Block** (Part 5) - 5-6 hours
+6. 🔴 **Multi-column** (Part 6) - DEFERRED
+
+**Total Estimate (Parts 1-5)**: 18-23 hours
+
+**Completion Order**:
+
+1. Button → 2. HTML → 3. Unsubscribe Footer → 4. Social Links → 5. Section
+
+**Dependencies**:
+
+- Parts 1-4 can be done in any order (independent)
+- Part 5 (Section) should be last of the batch
+- Part 6 (Multi-column) requires Part 5 complete
+
+**Files Structure**:
+
+```
+/lib/extensions/
+  email-button.ts
+  email-html-block.ts
+  email-unsubscribe-footer.ts
+  email-social-links.ts
+  email-section.ts
+
+/components/node-views/
+  html-block-view.tsx
+  social-links-view.tsx
+
+/public/social-icons/
+  twitter.png, twitter@2x.png
+  facebook.png, facebook@2x.png
+  linkedin.png, linkedin@2x.png
+  instagram.png, instagram@2x.png
+  github.png, github@2x.png
+  youtube.png, youtube@2x.png
+```
+
+**Next Steps After Phase 8**:
+
+- Phase 9: Variables System (inline nodes for personalization)
+- Phase 7 Part 6: Export menu (optional)
+- Phase 10: Polish, testing, email client compatibility
 
 ---
 
