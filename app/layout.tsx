@@ -7,9 +7,9 @@ import type { ReactNode } from "react";
 import Providers from "@/app/providers";
 
 const title =
-  "Novel - Notion-style WYSIWYG editor with AI-powered autocompletions";
+  "WYSIWYG Email Builder - Powerful Email Builder for Modern Teams";
 const description =
-  "Novel is a Notion-style WYSIWYG editor with AI-powered autocompletions. Built with Tiptap, OpenAI, and Vercel AI SDK.";
+  "AI-powered intelligence platform for company growth operations";
 
 export const metadata: Metadata = {
   title,
