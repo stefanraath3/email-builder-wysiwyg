@@ -216,10 +216,13 @@ function transformNode(
     case "socialLinksBlock":
       const PLATFORM_ORDER = ["linkedin", "facebook", "x", "youtube"] as const;
       const PLATFORM_ICONS: Record<string, string> = {
-        linkedin: "/social-links/social-linkedin.png",
-        facebook: "/social-links/social-facebook.png",
-        x: "/social-links/social-x.png",
-        youtube: "/social-links/social-youtube.png",
+        linkedin:
+          "https://example.com/social-links/social-linkedin.png",
+        facebook:
+          "https://example.com/social-links/social-facebook.png",
+        x: "https://example.com/social-links/social-x.png",
+        youtube:
+          "https://example.com/social-links/social-youtube.png",
       };
 
       const links = node.attrs?.links || [];
