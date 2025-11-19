@@ -81,6 +81,37 @@ export function getNodeStyles(
     }
   }
 
+  // Apply default button styles if not explicitly set
+  if (nodeType === "buttonBlock") {
+    // Default button display and cursor
+    css.display = css.display || "inline-block";
+    css.textDecoration = css.textDecoration || "none";
+    css.cursor = "pointer";
+    
+    // Default button background if not set
+    if (!blockStyles.backgroundColor && !mergedStyles.backgroundColor) {
+      css.backgroundColor = "#2563eb";
+    }
+    
+    // Default button text color if not set
+    if (!blockStyles.textColor && !mergedStyles.textColor) {
+      css.color = "#ffffff";
+    }
+    
+    // Default button padding if not set
+    if (!blockStyles.padding && !mergedStyles.padding) {
+      css.paddingTop = "12px";
+      css.paddingRight = "24px";
+      css.paddingBottom = "12px";
+      css.paddingLeft = "24px";
+    }
+    
+    // Default border radius if not set
+    if (blockStyles.borderRadius === undefined && mergedStyles.borderRadius === undefined) {
+      css.borderRadius = "4px";
+    }
+  }
+
   return css;
 }
 
@@ -103,6 +134,7 @@ function convertToReactEmailCSS(styles: BlockStyles): React.CSSProperties {
   if (styles.lineHeight) css.lineHeight = styles.lineHeight;
   if (styles.fontFamily) css.fontFamily = styles.fontFamily;
   if (styles.textAlign) css.textAlign = styles.textAlign;
+  if (styles.textDecoration) css.textDecoration = styles.textDecoration;
 
   // Layout
   if (styles.padding) {

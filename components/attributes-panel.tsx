@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useEditor } from "@/lib/novel";
-import { findNodeByUid, updateNodeAttrsByUid, getDefaultStylesForBlockType } from "@/lib/email-blocks";
+import {
+  findNodeByUid,
+  updateNodeAttrsByUid,
+  getDefaultStylesForBlockType,
+} from "@/lib/email-blocks";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +16,7 @@ import {
 } from "./ui/sheet";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 import { Copy } from "lucide-react";
@@ -50,11 +55,14 @@ export function AttributesPanel({
   const [activeStyleKeys, setActiveStyleKeys] = useState<Set<StyleOption>>(
     new Set()
   );
+  const [buttonText, setButtonText] = useState<string>("");
+  const [buttonHref, setButtonHref] = useState<string>("");
 
   // Get inherited defaults for this block type
-  const inheritedDefaults = blockType && globalStyles
-    ? getDefaultStylesForBlockType(blockType, globalStyles)
-    : {};
+  const inheritedDefaults =
+    blockType && globalStyles
+      ? getDefaultStylesForBlockType(blockType, globalStyles)
+      : {};
 
   // Load current styles from node and determine which style keys are active
   useEffect(() => {
@@ -64,6 +72,12 @@ export function AttributesPanel({
     if (result) {
       const nodeStyles = (result.node.attrs.styles as BlockStyles) || {};
       setStyles(nodeStyles);
+
+      // Load button-specific attrs if this is a button block
+      if (blockType === "buttonBlock") {
+        setButtonText(result.node.attrs.text || "");
+        setButtonHref(result.node.attrs.href || "");
+      }
 
       // Determine which style keys have values
       const active = new Set<StyleOption>();
@@ -81,7 +95,7 @@ export function AttributesPanel({
 
       setActiveStyleKeys(active);
     }
-  }, [editor, blockUid]);
+  }, [editor, blockUid, blockType]);
 
   // Auto-close if node not found
   useEffect(() => {
@@ -101,28 +115,12 @@ export function AttributesPanel({
     updateNodeAttrsByUid(editor, blockUid, { styles: newStyles });
   };
 
-  // Add a style control with a sensible default value
+  // Add a style control - show the control but don't create an override yet
+  // The override is only created when the user actually changes the value
   const handleAddStyle = (styleKey: StyleOption) => {
     setActiveStyleKeys((prev) => new Set(prev).add(styleKey));
-
-    // Set default values for newly added styles
-    const defaultValues: Partial<Record<StyleOption, any>> = {
-      backgroundColor: "#ffffff",
-      borderRadius: 0,
-      borderWidth: 1,
-      borderStyle: "solid",
-      borderColor: "#000000",
-      textColor: "#000000",
-      fontSize: 14,
-      fontWeight: 400,
-      lineHeight: 1.5,
-      textDecoration: "none",
-      padding: { top: 0, right: 0, bottom: 0, left: 0 },
-    };
-
-    if (defaultValues[styleKey] !== undefined) {
-      updateStyle(styleKey as keyof BlockStyles, defaultValues[styleKey]);
-    }
+    // Don't set a value yet - the control will show the inherited default
+    // and only create an override when the user changes it
   };
 
   // Remove a style control
@@ -199,7 +197,45 @@ export function AttributesPanel({
                 </div>
               </div>
 
-              <Separator />
+              {/* Button-specific fields */}
+              {blockType === "buttonBlock" && (
+                <>
+                  <div>
+                    <Label className="text-xs mb-2 block">Button Text</Label>
+                    <Input
+                      value={buttonText}
+                      onChange={(e) => {
+                        const newText = e.target.value;
+                        setButtonText(newText);
+                        if (editor && blockUid) {
+                          updateNodeAttrsByUid(editor, blockUid, {
+                            text: newText,
+                          });
+                        }
+                      }}
+                      placeholder="Click me"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs mb-2 block">Button URL</Label>
+                    <Input
+                      type="url"
+                      value={buttonHref}
+                      onChange={(e) => {
+                        const newHref = e.target.value;
+                        setButtonHref(newHref);
+                        if (editor && blockUid) {
+                          updateNodeAttrsByUid(editor, blockUid, {
+                            href: newHref,
+                          });
+                        }
+                      }}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <Separator />
+                </>
+              )}
 
               {/* Alignment Control - Always visible for all blocks */}
               <div>

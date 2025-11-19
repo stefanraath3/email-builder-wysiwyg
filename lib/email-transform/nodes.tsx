@@ -1,4 +1,4 @@
-import { Text, Heading, Img, Link, Hr } from "@react-email/components";
+import { Text, Heading, Img, Link, Hr, Button } from "@react-email/components";
 import type { JSONContent } from "@tiptap/react";
 import type { GlobalStyles } from "@/types/email-template";
 import { getNodeStyles } from "./styles";
@@ -176,6 +176,24 @@ function transformNode(
           key={key}
           style={getNodeStyles(node, globalStyles, "horizontalRule")}
         />
+      );
+
+    case "buttonBlock":
+      const buttonStyles = getNodeStyles(node, globalStyles, "buttonBlock");
+
+      // Handle alignment - buttons need special treatment for email clients
+      const alignment = node.attrs?.styles?.textAlign || "left";
+      const wrapperStyle: React.CSSProperties = {
+        textAlign: alignment as React.CSSProperties["textAlign"],
+        margin: "16px 0",
+      };
+
+      return (
+        <div key={key} style={wrapperStyle}>
+          <Button href={node.attrs?.href || "#"} style={buttonStyles}>
+            {node.attrs?.text || "Click me"}
+          </Button>
+        </div>
       );
 
     default:

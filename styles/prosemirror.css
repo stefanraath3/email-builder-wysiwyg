@@ -229,7 +229,9 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 .tippy-box [data-slot="command-item"],
 .tippy-box [cmdk-item],
 .tippy-box [role="option"] {
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
   cursor: pointer;
 }
 
@@ -303,8 +305,9 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   border-radius: var(--email-inline-code-radius, 0.25rem);
   font-size: 0.875em;
   font-weight: 500;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
 }
 
 .ProseMirror pre {
@@ -341,7 +344,9 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
   background-color: hsl(var(--background));
   border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 /* Ensure tippy-box (bubble menu) has proper background */
@@ -405,7 +410,9 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 .drag-handle {
   position: absolute;
   opacity: 1;
-  transition: opacity ease-in 0.2s, background-color 0.2s;
+  transition:
+    opacity ease-in 0.2s,
+    background-color 0.2s;
   border-radius: 0.25rem;
   width: 1.2rem;
   height: 1.5rem;
@@ -458,7 +465,9 @@ ul[data-type="taskList"] li[data-checked="true"] > div > p {
 .block-attributes-handle {
   position: absolute;
   opacity: 1;
-  transition: opacity ease-in 0.2s, background-color 0.2s;
+  transition:
+    opacity ease-in 0.2s,
+    background-color 0.2s;
   border-radius: 0.25rem;
   width: 1.2rem;
   height: 1.5rem;
@@ -567,4 +576,17 @@ mark[style] > strong {
   color: hsl(var(--muted-foreground));
   font-style: italic;
   text-align: center;
+}
+
+/* Button block styling */
+div[data-type="button-block"] {
+  margin: 16px 0;
+  text-align: center;
+}
+
+div[data-type="button-block"] > a {
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: none; /* Prevent navigation in editor */
 }

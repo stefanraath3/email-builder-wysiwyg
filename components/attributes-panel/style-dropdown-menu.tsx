@@ -31,6 +31,7 @@ interface StyleDropdownMenuProps {
 }
 
 const TEXT_BLOCKS = ["paragraph", "heading", "blockquote"];
+const BUTTON_BLOCKS = ["buttonBlock"];
 
 export function StyleDropdownMenu({
   activeStyles,
@@ -38,6 +39,7 @@ export function StyleDropdownMenu({
   blockType,
 }: StyleDropdownMenuProps) {
   const isTextBlock = blockType && TEXT_BLOCKS.includes(blockType);
+  const isButtonBlock = blockType && BUTTON_BLOCKS.includes(blockType);
 
   const appearanceOptions: { value: StyleOption; label: string }[] = [
     { value: "backgroundColor", label: "Background" },
@@ -79,7 +81,7 @@ export function StyleDropdownMenu({
           </DropdownMenuItem>
         ))}
 
-        {isTextBlock && (
+        {(isTextBlock || isButtonBlock) && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Typography</DropdownMenuLabel>

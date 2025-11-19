@@ -233,7 +233,17 @@ export const emailSuggestionItems = createSuggestionItems([
     description: "Add a call-to-action button.",
     searchTerms: ["button", "cta", "link"],
     icon: <MousePointerClick size={18} />,
-    command: createPlaceholderCommand("Button Block"),
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertButton({
+          text: "Click me",
+          href: "#",
+        })
+        .run();
+    },
   },
   {
     title: "Divider",

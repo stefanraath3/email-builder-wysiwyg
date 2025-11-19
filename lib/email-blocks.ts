@@ -279,6 +279,25 @@ export function mergeWithGlobalStyles(
     }
   }
 
+  // Buttons inherit button-specific defaults
+  if (blockType === "buttonBlock") {
+    if (!merged.backgroundColor && globalStyles.button.backgroundColor) {
+      merged.backgroundColor = globalStyles.button.backgroundColor;
+    }
+    if (!merged.textColor && globalStyles.button.textColor) {
+      merged.textColor = globalStyles.button.textColor;
+    }
+    if (
+      merged.borderRadius === undefined &&
+      globalStyles.button.borderRadius !== undefined
+    ) {
+      merged.borderRadius = globalStyles.button.borderRadius;
+    }
+    if (!merged.padding && globalStyles.button.padding) {
+      merged.padding = globalStyles.button.padding;
+    }
+  }
+
   // Code blocks inherit code block defaults
   if (blockType === "codeBlock") {
     if (!merged.backgroundColor && globalStyles.codeBlock.backgroundColor) {
@@ -332,6 +351,14 @@ export function getDefaultStylesForBlockType(
   // Images inherit image-specific defaults
   if (blockType === "image") {
     defaults.borderRadius = globalStyles.image.borderRadius;
+  }
+
+  // Buttons inherit button-specific defaults
+  if (blockType === "buttonBlock") {
+    defaults.backgroundColor = globalStyles.button.backgroundColor;
+    defaults.textColor = globalStyles.button.textColor;
+    defaults.borderRadius = globalStyles.button.borderRadius;
+    defaults.padding = globalStyles.button.padding;
   }
 
   // Code blocks inherit code block defaults + typography
