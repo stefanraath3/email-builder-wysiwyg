@@ -7,6 +7,7 @@ import {
 } from "@/lib/email-template-context";
 import { EmailTemplateEditor } from "@/components/email-template-editor";
 import { GlobalStylesPanel } from "@/components/global-styles-panel";
+import { EmailTransformTestModal } from "@/components/email-transform-test-modal";
 import Menu from "@/components/ui/menu";
 import { Sliders } from "lucide-react";
 import { transformToReactEmail } from "@/lib/email-transform";
@@ -14,6 +15,8 @@ import { render } from "@react-email/render";
 
 function TestTransformButton() {
   const { template } = useEmailTemplateContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [renderedHtml, setRenderedHtml] = useState("");
 
   const handleTestTransform = async () => {
     try {
@@ -22,21 +25,28 @@ function TestTransformButton() {
       const html = await render(reactEmail);
       console.log("✅ Transform successful!");
       console.log("HTML length:", html.length);
-      console.log("HTML preview (first 500 chars):", html.substring(0, 500));
-      console.log("Full HTML:", html);
+      setRenderedHtml(html);
+      setIsModalOpen(true);
     } catch (error) {
       console.error("❌ Transform failed:", error);
     }
   };
 
   return (
-    <button
-      className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
-      onClick={handleTestTransform}
-      title="Test email transformation (check console)"
-    >
-      Test Transform
-    </button>
+    <>
+      <button
+        className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+        onClick={handleTestTransform}
+        title="Test email transformation"
+      >
+        Test Transform
+      </button>
+      <EmailTransformTestModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        html={renderedHtml}
+      />
+    </>
   );
 }
 
