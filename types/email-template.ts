@@ -32,6 +32,8 @@ export interface BodyStyles {
   backgroundColor: string;
   /** Body alignment (where content sits) */
   align: "left" | "center" | "right";
+  /** Body padding (space around container on all sides) */
+  padding: Padding;
   /** Body border color */
   borderColor?: string;
 }

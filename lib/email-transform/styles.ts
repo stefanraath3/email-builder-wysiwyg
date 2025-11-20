@@ -10,7 +10,10 @@ export function getBodyStyles(globalStyles: GlobalStyles): React.CSSProperties {
   return {
     backgroundColor: globalStyles.body.backgroundColor,
     margin: 0,
-    padding: 0,
+    paddingTop: `${globalStyles.body.padding.top}px`,
+    paddingRight: `${globalStyles.body.padding.right}px`,
+    paddingBottom: `${globalStyles.body.padding.bottom}px`,
+    paddingLeft: `${globalStyles.body.padding.left}px`,
     fontFamily: globalStyles.typography.fontFamily,
     fontSize: `${globalStyles.typography.fontSize}px`,
     lineHeight: globalStyles.typography.lineHeight,
