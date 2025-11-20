@@ -192,6 +192,18 @@ export function GlobalStylesPanel({
                     onChange={(color) => updateBody({ borderColor: color })}
                   />
                 </div>
+
+                <PaddingControl
+                  value={
+                    bodyStyles.padding || {
+                      top: 8,
+                      right: 8,
+                      bottom: 8,
+                      left: 8,
+                    }
+                  }
+                  onChange={(padding) => updateBody({ padding })}
+                />
               </AccordionContent>
             </AccordionItem>
 
