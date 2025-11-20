@@ -22,12 +22,14 @@ export const DEFAULT_LINE_HEIGHT = 1.55;
 
 /**
  * Default padding values (all sides)
+ * Note: Horizontal padding is essential for mobile email clients
+ * to prevent content from being flush against container edges
  */
 export const DEFAULT_PADDING = {
   top: 0,
-  right: 0,
+  right: 16,
   bottom: 0,
-  left: 0,
+  left: 16,
 };
 
 /**
