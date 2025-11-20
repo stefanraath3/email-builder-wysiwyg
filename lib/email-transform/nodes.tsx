@@ -119,6 +119,12 @@ function transformNode(
         }
       }
 
+      // Safety constraint: if no explicit width/height, add max-width to prevent oversized images
+      if (!node.attrs?.width && !node.attrs?.height) {
+        imgStyles.maxWidth = "100%";
+        imgStyles.height = "auto";
+      }
+
       return (
         <Img
           key={key}
