@@ -30,7 +30,13 @@ export const UploadImagesPlugin = ({ imageClass }: { imageClass: string }) =>
           set = set.add(tr.doc, [deco]);
         } else if (action?.remove) {
           // biome-ignore lint/suspicious/noDoubleEquals: <explanation>
-          set = set.remove(set.find(undefined, undefined, (spec) => spec.id == action.remove.id));
+          set = set.remove(
+            set.find(
+              undefined,
+              undefined,
+              (spec) => spec.id == action.remove.id
+            )
+          );
         }
         return set;
       },
@@ -81,39 +87,79 @@ export const createImageUpload =
       view.dispatch(tr);
     };
 
-    onUpload(file).then((src) => {
-      const { schema } = view.state;
+    onUpload(file).then(
+      (src) => {
+        const { schema } = view.state;
 
-      const pos = findPlaceholder(view.state, id);
+        const pos = findPlaceholder(view.state, id);
 
-      // If the content around the placeholder has been deleted, drop
-      // the image
-      if (pos == null) return;
+        // If the content around the placeholder has been deleted, drop
+        // the image
+        if (pos == null) return;
 
-      // Otherwise, insert it at the placeholder's position, and remove
-      // the placeholder
+        // Otherwise, insert it at the placeholder's position, and remove
+        // the placeholder
 
-      // When BLOB_READ_WRITE_TOKEN is not valid or unavailable, read
-      // the image locally
-      const imageSrc = typeof src === "object" ? reader.result : src;
+        // When BLOB_READ_WRITE_TOKEN is not valid or unavailable, read
+        // the image locally
+        const imageSrc = typeof src === "object" ? reader.result : src;
 
-      const node = schema.nodes.image?.create({ src: imageSrc });
-      if (!node) return;
+        // Load the image to get natural dimensions and constrain to email width
+        const img = new Image();
+        img.onload = () => {
+          const MAX_WIDTH = 600; // Email container max width
+          let { width, height } = img;
 
-      const transaction = view.state.tr.replaceWith(pos, pos, node).setMeta(uploadKey, { remove: { id } });
-      view.dispatch(transaction);
-    }, () => {
-      // Deletes the image placeholder on error
-      const transaction = view.state.tr
-        .delete(pos, pos)
-        .setMeta(uploadKey, { remove: { id } });
-      view.dispatch(transaction);
-    });
+          // If image is wider than max, scale it down proportionally
+          if (width > MAX_WIDTH) {
+            const ratio = MAX_WIDTH / width;
+            width = MAX_WIDTH;
+            height = height * ratio;
+          }
+
+          const node = schema.nodes.image?.create({
+            src: imageSrc,
+            width,
+            height,
+          });
+          if (!node) return;
+
+          const transaction = view.state.tr
+            .replaceWith(pos, pos, node)
+            .setMeta(uploadKey, { remove: { id } });
+          view.dispatch(transaction);
+        };
+
+        img.onerror = () => {
+          // Fallback: create node without dimensions if image fails to load
+          const node = schema.nodes.image?.create({ src: imageSrc });
+          if (!node) return;
+
+          const transaction = view.state.tr
+            .replaceWith(pos, pos, node)
+            .setMeta(uploadKey, { remove: { id } });
+          view.dispatch(transaction);
+        };
+
+        img.src = imageSrc as string;
+      },
+      () => {
+        // Deletes the image placeholder on error
+        const transaction = view.state.tr
+          .delete(pos, pos)
+          .setMeta(uploadKey, { remove: { id } });
+        view.dispatch(transaction);
+      }
+    );
   };
 
 export type UploadFn = (file: File, view: EditorView, pos: number) => void;
 
-export const handleImagePaste = (view: EditorView, event: ClipboardEvent, uploadFn: UploadFn) => {
+export const handleImagePaste = (
+  view: EditorView,
+  event: ClipboardEvent,
+  uploadFn: UploadFn
+) => {
   if (event.clipboardData?.files.length) {
     event.preventDefault();
     const [file] = Array.from(event.clipboardData.files);
@@ -125,7 +171,12 @@ export const handleImagePaste = (view: EditorView, event: ClipboardEvent, upload
   return false;
 };
 
-export const handleImageDrop = (view: EditorView, event: DragEvent, moved: boolean, uploadFn: UploadFn) => {
+export const handleImageDrop = (
+  view: EditorView,
+  event: DragEvent,
+  moved: boolean,
+  uploadFn: UploadFn
+) => {
   if (!moved && event.dataTransfer?.files.length) {
     event.preventDefault();
     const [file] = Array.from(event.dataTransfer.files);
