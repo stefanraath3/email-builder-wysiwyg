@@ -1,14 +1,16 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { SocialLinksView } from "@/components/node-views/social-links-view";
+import type { SocialLink } from "./email-social-links-constants";
 
-/**
- * Social link configuration
- */
-export type SocialLink = {
-  platform: "linkedin" | "facebook" | "x" | "youtube";
-  url: string;
-};
+// Re-export constants for convenience (but server code should import from constants file)
+export type { SocialLink } from "./email-social-links-constants";
+export {
+  PLATFORM_ORDER,
+  PLATFORM_LABELS,
+  PLATFORM_ICONS_RELATIVE,
+  getPlatformIconUrl,
+} from "./email-social-links-constants";
 
 /**
  * Options for inserting social links

@@ -19,7 +19,6 @@ import { useDebouncedCallback } from "use-debounce";
 import { defaultExtensions } from "./extensions";
 import { ColorSelector } from "./selectors/color-selector";
 import { LinkSelector } from "./selectors/link-selector";
-import { MathSelector } from "./selectors/math-selector";
 import { NodeSelector } from "./selectors/node-selector";
 import { Separator } from "./ui/separator";
 
@@ -153,8 +152,6 @@ const TailwindAdvancedEditor = () => {
             <Separator orientation="vertical" />
 
             <LinkSelector open={openLink} onOpenChange={setOpenLink} />
-            <Separator orientation="vertical" />
-            <MathSelector />
             <Separator orientation="vertical" />
             <TextButtons />
             <Separator orientation="vertical" />

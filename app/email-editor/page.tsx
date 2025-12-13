@@ -40,7 +40,7 @@ function TestTransformButton() {
   return (
     <>
       <button
-        className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+        className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
         onClick={handleTestTransform}
         title="Test email transformation"
       >
@@ -82,6 +82,7 @@ function ThemeSwitcher() {
       size="icon"
       onClick={cycleTheme}
       title={mounted ? `Current theme: ${theme}` : "Theme"}
+      className="text-gray-300 hover:bg-gray-800 hover:text-white"
     >
       {getIcon()}
     </Button>
@@ -155,28 +156,38 @@ function EmailEditorContent({
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
-      <div className="border-b border-border bg-background">
-        <div className="mx-auto max-w-7xl px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-50 bg-black border-b border-border">
+        <div className="w-full px-6 py-4">
+          <div className="flex items-center relative">
+            {/* Left: Styles button */}
+            <div className="flex items-center">
               <button
-                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors"
                 onClick={() => setIsStylesOpen(true)}
                 title="Global Styles"
               >
                 <Sliders className="h-4 w-4" />
                 Styles
               </button>
-              <div className="h-4 w-px bg-border" />
-              <h1 className="text-lg font-medium">Email Template Editor</h1>
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+            </div>
+
+            {/* Center: Template name and Draft badge */}
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+              <span className="text-gray-400 text-sm">Templates</span>
+              <span className="text-gray-400 text-sm">/</span>
+              <h1 className="text-lg font-semibold text-white">
+                Email Template Editor
+              </h1>
+              <span className="rounded-md bg-gray-800 px-2.5 py-0.5 text-xs text-gray-300">
                 Draft
               </span>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Right: Action buttons */}
+            <div className="ml-auto flex items-center gap-2">
               <TestTransformButton />
               <button
-                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-black hover:bg-gray-100 transition-colors"
                 onClick={() => setIsSendTestEmailOpen(true)}
               >
                 Send Test Email

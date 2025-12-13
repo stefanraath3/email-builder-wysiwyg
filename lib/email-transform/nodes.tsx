@@ -3,6 +3,11 @@ import type { JSONContent } from "@tiptap/react";
 import type { GlobalStyles } from "@/types/email-template";
 import { getNodeStyles } from "./styles";
 import { transformInlineContent } from "./marks";
+import {
+  PLATFORM_ORDER,
+  PLATFORM_LABELS,
+  getPlatformIconUrl,
+} from "@/lib/extensions/email-social-links-constants";
 
 /**
  * Transform TipTap document content into React Email components
@@ -220,17 +225,6 @@ function transformNode(
       );
 
     case "socialLinksBlock":
-      const PLATFORM_ORDER = ["linkedin", "facebook", "x", "youtube"] as const;
-      const PLATFORM_ICONS: Record<string, string> = {
-        linkedin:
-          "https://example.com/social-links/social-linkedin.png",
-        facebook:
-          "https://example.com/social-links/social-facebook.png",
-        x: "https://example.com/social-links/social-x.png",
-        youtube:
-          "https://example.com/social-links/social-youtube.png",
-      };
-
       const links = node.attrs?.links || [];
       if (links.length === 0) return null;
 
@@ -255,8 +249,8 @@ function transformNode(
               style={{ display: "inline-block" }}
             >
               <Img
-                src={PLATFORM_ICONS[link.platform]}
-                alt={link.platform}
+                src={getPlatformIconUrl(link.platform)}
+                alt={PLATFORM_LABELS[link.platform] || link.platform}
                 width={48}
                 height={48}
                 style={{

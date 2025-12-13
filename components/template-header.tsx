@@ -1,18 +1,13 @@
 "use client";
 
 import { useEmailTemplate } from "@/hooks/use-email-template";
-import { Mail, Reply, FileText, Eye } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 /**
  * Template header component with editable fields
  * Allows editing email header information: from, replyTo, subject, preview
+ * Styled as a vertical column matching the editor width, with bottom borders
  */
 export default function TemplateHeader() {
   const { template, updateHeader } = useEmailTemplate();
@@ -38,114 +33,122 @@ export default function TemplateHeader() {
   };
 
   return (
-    <Collapsible defaultOpen={true} className="border-b border-border pb-4">
-      <CollapsibleTrigger className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded-md px-3 py-2 transition-colors">
-        <h2 className="text-sm font-semibold text-foreground">Email Header</h2>
-        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-3 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* From Field */}
-          <div className="space-y-1">
-            <label
-              htmlFor="header-from"
-              className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"
-            >
-              <Mail className="h-3 w-3" />
-              From
-            </label>
+    <div className="space-y-0">
+      {/* From Field */}
+      <div className="pb-3 border-b border-border">
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="header-from"
+            className="text-sm font-medium text-muted-foreground"
+          >
+            From
+          </label>
+          <div className="flex-1 ml-4">
             <Input
               id="header-from"
               type="email"
               value={header.from}
               onChange={handleFromChange}
               placeholder="sender@example.com"
-              className={
+              className={cn(
+                "border-0 px-0 h-auto py-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none",
                 header.from && !emailRegex.test(header.from)
-                  ? "border-destructive"
+                  ? "text-destructive"
                   : ""
-              }
+              )}
             />
             {header.from && !emailRegex.test(header.from) && (
-              <p className="text-xs text-destructive">
+              <p className="text-xs text-destructive mt-1">
                 Please enter a valid email address
               </p>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Reply-To Field */}
-          <div className="space-y-1">
-            <label
-              htmlFor="header-reply-to"
-              className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"
-            >
-              <Reply className="h-3 w-3" />
-              Reply-To
-            </label>
+      {/* Reply-To Field */}
+      <div className="py-3 border-b border-border">
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="header-reply-to"
+            className="text-sm font-medium text-muted-foreground"
+          >
+            Reply-To
+          </label>
+          <div className="flex-1 ml-4">
             <Input
               id="header-reply-to"
               type="email"
               value={header.replyTo}
               onChange={handleReplyToChange}
               placeholder="reply@example.com"
-              className={
+              className={cn(
+                "border-0 px-0 h-auto py-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none",
                 header.replyTo && !emailRegex.test(header.replyTo)
-                  ? "border-destructive"
+                  ? "text-destructive"
                   : ""
-              }
+              )}
             />
             {header.replyTo && !emailRegex.test(header.replyTo) && (
-              <p className="text-xs text-destructive">
+              <p className="text-xs text-destructive mt-1">
                 Please enter a valid email address
               </p>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Subject Field */}
-        <div className="space-y-1">
-          <label
-            htmlFor="header-subject"
-            className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"
-          >
-            <FileText className="h-3 w-3" />
-            Subject
-          </label>
-          <Input
-            id="header-subject"
-            type="text"
-            value={header.subject}
-            onChange={handleSubjectChange}
-            placeholder="Your email subject"
-            maxLength={100}
-          />
-          <p className="text-xs text-muted-foreground">
-            {header.subject.length}/100 characters
-          </p>
-        </div>
-
-        {/* Preview Text Field */}
-        <div className="space-y-1">
+      {/* Preview Text Field */}
+      <div className="py-3 border-b border-border">
+        <div className="flex items-center justify-between">
           <label
             htmlFor="header-preview"
-            className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"
+            className="text-sm font-medium text-muted-foreground"
           >
-            <Eye className="h-3 w-3" />
-            Preview Text
+            Preview
           </label>
-          <Input
-            id="header-preview"
-            type="text"
-            value={header.preview}
-            onChange={handlePreviewChange}
-            placeholder="Preview text shown in inbox"
-            maxLength={150}
-          />
-          <p className="text-xs text-muted-foreground">
-            {header.preview.length}/150 characters
-          </p>
+          <div className="flex-1 ml-4 flex items-center gap-2">
+            <Input
+              id="header-preview"
+              type="text"
+              value={header.preview}
+              onChange={handlePreviewChange}
+              placeholder="Preview text shown in inbox"
+              maxLength={150}
+              className="border-0 px-0 h-auto py-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+            />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {header.preview.length}/150
+            </span>
+          </div>
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+
+      {/* Subject Field */}
+      <div className="py-3 border-b border-border">
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="header-subject"
+            className="text-sm font-medium text-muted-foreground"
+          >
+            Subject
+          </label>
+          <div className="flex-1 ml-4 flex items-center gap-2">
+            <Input
+              id="header-subject"
+              type="text"
+              value={header.subject}
+              onChange={handleSubjectChange}
+              placeholder="Your email subject"
+              maxLength={100}
+              className="border-0 px-0 h-auto py-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+            />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {header.subject.length}/100
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -19,13 +19,15 @@ import { useEmailTemplate } from "@/hooks/use-email-template";
 import { emailExtensions } from "@/components/email-extensions";
 import { ColorSelector } from "./selectors/color-selector";
 import { LinkSelector } from "./selectors/link-selector";
-import { MathSelector } from "./selectors/math-selector";
 import { EmailNodeSelector } from "./selectors/email-node-selector";
 import { Separator } from "./ui/separator";
 import GenerativeMenuSwitch from "./generative/generative-menu-switch";
 import { uploadFn } from "./image-upload";
 import { TextButtons } from "./selectors/text-buttons";
-import { emailSlashCommand, emailSuggestionItems } from "./email-slash-command";
+import {
+  emailSlashCommand,
+  emailSuggestionGroups,
+} from "./email-slash-command";
 import TemplateHeader from "./template-header";
 import EmailTemplateDebugPanel from "./email-template-debug-panel";
 import { useEditor } from "@/lib/novel";
@@ -36,7 +38,6 @@ import {
 } from "@/lib/email-blocks";
 import { useActiveBlock } from "@/hooks/use-active-block";
 import { AttributesPanel } from "./attributes-panel";
-import { ActiveBlockTestPanel } from "./active-block-test-panel";
 import {
   applyGlobalStylesToElement,
   getContainerAlignmentClass,
@@ -48,6 +49,7 @@ import {
 } from "@/lib/email-template-defaults";
 import { SocialLinksConfigModal } from "./social-links-config-modal";
 import type { SocialLink } from "@/lib/extensions/email-social-links";
+import { CommandGroup } from "@/components/ui/command";
 
 const extensions = [...emailExtensions, emailSlashCommand];
 
@@ -201,14 +203,21 @@ export function EmailTemplateEditor() {
   return (
     <>
       {/* Email Header - Separate row, not affected by body background */}
-      <div className="w-full bg-background border-b border-border py-4">
-        <div className="mx-auto max-w-7xl px-6">
+      <div className="w-full bg-background py-4">
+        <div
+          className="mx-auto px-8 sm:px-12"
+          style={{
+            width: `${
+              template.globalStyles?.container?.width ?? DEFAULT_CONTAINER_WIDTH
+            }px`,
+          }}
+        >
           <TemplateHeader />
         </div>
       </div>
 
       {/* Body Background - This is what gets the body backgroundColor */}
-      <div className="email-body-content flex-1 py-8">
+      <div className="email-body-content flex-1 pt-4 pb-8">
         {/* Editor Canvas - Container sits on Body */}
         <div
           ref={editorWrapperRef}
@@ -276,41 +285,38 @@ export function EmailTemplateEditor() {
                     No results
                   </EditorCommandEmpty>
                   <EditorCommandList>
-                    {emailSuggestionItems.map((item, index) => {
-                      // Check if this is a category header
-                      const isCategoryHeader =
-                        (item as any).isCategoryHeader === true;
-
-                      if (isCategoryHeader) {
-                        return (
-                          <div
-                            key={`category-${item.title}`}
-                            className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                    {emailSuggestionGroups.map((group) => (
+                      <CommandGroup
+                        key={`group-${group.title}`}
+                        heading={group.title}
+                        className={cn(
+                          "p-0",
+                          "**:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:text-muted-foreground **:[[cmdk-group-heading]]:uppercase **:[[cmdk-group-heading]]:tracking-wider"
+                        )}
+                      >
+                        {group.items.map((item) => (
+                          <EditorCommandItem
+                            key={`item-${group.title}-${item.title}`}
+                            value={item.title}
+                            keywords={
+                              item.searchTerms ? [...item.searchTerms] : []
+                            }
+                            onCommand={(val) => item.command?.(val)}
+                            className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
                           >
-                            {item.title}
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <EditorCommandItem
-                          value={item.title}
-                          onCommand={(val) => item.command?.(val)}
-                          className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
-                          key={`item-${index}-${item.title}`}
-                        >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-muted bg-background">
-                            {item.icon}
-                          </div>
-                          <div>
-                            <p className="font-medium">{item.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {item.description}
-                            </p>
-                          </div>
-                        </EditorCommandItem>
-                      );
-                    })}
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-muted bg-background">
+                              {item.icon}
+                            </div>
+                            <div>
+                              <p className="font-medium">{item.title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {item.description}
+                              </p>
+                            </div>
+                          </EditorCommandItem>
+                        ))}
+                      </CommandGroup>
+                    ))}
                   </EditorCommandList>
                 </EditorCommand>
 
@@ -324,17 +330,10 @@ export function EmailTemplateEditor() {
                   <Separator orientation="vertical" />
                   <LinkSelector open={openLink} onOpenChange={setOpenLink} />
                   <Separator orientation="vertical" />
-                  <MathSelector />
-                  <Separator orientation="vertical" />
                   <TextButtons />
                   <Separator orientation="vertical" />
                   <ColorSelector open={openColor} onOpenChange={setOpenColor} />
                 </GenerativeMenuSwitch>
-
-                {/* Active Block Test Panel (Dev Only) - temporarily enabled for verification */}
-                {process.env.NODE_ENV === "development" && (
-                  <ActiveBlockTestPanel />
-                )}
 
                 {/* Attributes Panel - uses activeBlock from useActiveBlock hook */}
                 {/* Sheet uses portals so it can be rendered here but will portal to body */}

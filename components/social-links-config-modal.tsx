@@ -19,23 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
-import type { SocialLink } from "@/lib/extensions/email-social-links";
-
-const PLATFORM_ORDER = ["linkedin", "facebook", "x", "youtube"] as const;
-
-const PLATFORM_ICONS: Record<string, string> = {
-  linkedin: "/social-links/social-linkedin.png",
-  facebook: "/social-links/social-facebook.png",
-  x: "/social-links/social-x.png",
-  youtube: "/social-links/social-youtube.png",
-};
-
-const PLATFORM_LABELS: Record<string, string> = {
-  linkedin: "LinkedIn",
-  facebook: "Facebook",
-  x: "X",
-  youtube: "YouTube",
-};
+import {
+  type SocialLink,
+  PLATFORM_ORDER,
+  PLATFORM_ICONS_RELATIVE,
+  PLATFORM_LABELS,
+} from "@/lib/extensions/email-social-links";
 
 interface SocialLinksConfigModalProps {
   open: boolean;
@@ -174,7 +163,7 @@ export function SocialLinksConfigModal({
                   className="flex items-center gap-3 rounded-md border p-3"
                 >
                   <img
-                    src={PLATFORM_ICONS[link.platform]}
+                    src={PLATFORM_ICONS_RELATIVE[link.platform]}
                     alt={PLATFORM_LABELS[link.platform]}
                     className="h-8 w-8 rounded-full"
                   />

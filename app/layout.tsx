@@ -1,13 +1,11 @@
 import "@/styles/globals.css";
 import "@/styles/prosemirror.css";
-import "katex/dist/katex.min.css";
 
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import Providers from "@/app/providers";
 
-const title =
-  "WYSIWYG Email Builder - Powerful Email Builder for Modern Teams";
+const title = "WYSIWYG Email Builder - Powerful Email Builder for Modern Teams";
 const description =
   "AI-powered intelligence platform for company growth operations";
 
